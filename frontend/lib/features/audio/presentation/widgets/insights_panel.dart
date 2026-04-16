@@ -6,11 +6,15 @@ class InsightsPanel extends StatelessWidget {
   const InsightsPanel({
     required this.currentInsight,
     required this.insights,
+    required this.currentTime,
+    required this.totalDuration,
     super.key,
   });
 
   final String currentInsight;
   final List<String> insights;
+  final double currentTime;
+  final double totalDuration;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +36,18 @@ class InsightsPanel extends StatelessWidget {
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.w700,
             ),
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: totalDuration <= 0 ? 0 : (currentTime / totalDuration).clamp(0.0, 1.0),
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(99),
+            backgroundColor: const Color(0xFFE2E8F0),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Timeline ${currentTime.toStringAsFixed(2)}s / ${totalDuration.toStringAsFixed(2)}s',
+            style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
           ),
           const SizedBox(height: 16),
           Wrap(

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/glass_card.dart';
+import 'reactive_particle_field.dart';
 
 class WaveformPanel extends StatefulWidget {
   const WaveformPanel({
@@ -12,6 +13,8 @@ class WaveformPanel extends StatefulWidget {
     required this.duration,
     required this.currentTime,
     required this.bpm,
+    required this.currentEnergy,
+    required this.currentBass,
     required this.onSeek,
     super.key,
   });
@@ -22,6 +25,8 @@ class WaveformPanel extends StatefulWidget {
   final double duration;
   final double currentTime;
   final double bpm;
+  final double currentEnergy;
+  final double currentBass;
   final ValueChanged<double> onSeek;
 
   @override
@@ -73,6 +78,9 @@ class _WaveformPanelState extends State<WaveformPanel> {
                     child: Stack(
                       children: [
                         Positioned.fill(
+                          child: ReactiveParticleField(intensity: widget.currentBass),
+                        ),
+                        Positioned.fill(
                           child: CustomPaint(
                             painter: _WaveformPainter(
                               energy: values,
@@ -80,6 +88,7 @@ class _WaveformPanelState extends State<WaveformPanel> {
                               beatTimestamps: widget.beatTimestamps,
                               duration: widget.duration,
                               currentTime: widget.currentTime,
+                              currentEnergy: widget.currentEnergy,
                             ),
                           ),
                         ),
@@ -167,6 +176,7 @@ class _WaveformPainter extends CustomPainter {
     required this.beatTimestamps,
     required this.duration,
     required this.currentTime,
+    required this.currentEnergy,
   });
 
   final List<double> energy;
@@ -174,16 +184,23 @@ class _WaveformPainter extends CustomPainter {
   final List<double> beatTimestamps;
   final double duration;
   final double currentTime;
+  final double currentEnergy;
 
   @override
   void paint(Canvas canvas, Size size) {
+    final accent = Color.lerp(
+      const Color(0xFF3B82F6),
+      const Color(0xFFEC4899),
+      currentEnergy.clamp(0.0, 1.0),
+    )!;
+
     final basePaint = Paint()
-      ..color = const Color(0xFF3B82F6).withValues(alpha: 0.18)
+      ..color = accent.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
 
     final wavePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+      ..shader = LinearGradient(
+        colors: [accent, const Color(0xFF8B5CF6)],
       ).createShader(Offset.zero & size)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.4;
@@ -258,6 +275,7 @@ class _WaveformPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _WaveformPainter oldDelegate) {
     return oldDelegate.currentTime != currentTime ||
+        oldDelegate.currentEnergy != currentEnergy ||
         oldDelegate.energy != energy ||
         oldDelegate.pitch != pitch ||
         oldDelegate.beatTimestamps != beatTimestamps;

@@ -58,10 +58,16 @@ MusicLens/
    - Dashboard layout with waveform, spectrum, metrics, and insights panels
    - Interactive waveform seek + hover tooltip
 
-3. Next steps
-   - Replace visual playback simulator with real audio playback timeline sync
-   - Add richer event detection (verse/chorus/drop segmentation)
-   - Add optional instrument separation and Music DNA summary
+3. Advanced reactive layer (completed)
+  - Real audio playback with waveform/spectrum sync
+  - Bass-reactive particle system
+  - Energy-driven color transitions
+  - Rule-based section timeline for "What's happening now?"
+
+4. Optional expansions
+  - Instrument separation (backend)
+  - Song comparison view
+  - Multi-track Music DNA benchmarking
 
 ## 3) Backend Setup (Windows + VS Code)
 
@@ -142,8 +148,9 @@ You can change this in:
 Implemented now:
 - End-to-end upload and analysis request flow
 - Backend feature extraction JSON
-- Light-themed premium dashboard skeleton with interactive placeholder visuals
+- Light-themed premium dashboard with interactive reactive visuals
+- Real audio playback synchronized to analytics timeline
+- Rule-based insight timeline and Music DNA summary panel
 
-Still placeholder for next step:
-- Real audio playback engine sync (visual timer currently simulated)
-- Particle system bound to true bass envelope
+Optional for future:
+- Instrument separation and comparative analytics pages

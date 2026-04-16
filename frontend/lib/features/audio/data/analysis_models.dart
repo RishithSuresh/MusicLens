@@ -14,6 +14,26 @@ class SpectrumFrame {
   }
 }
 
+class InsightSegment {
+  const InsightSegment({
+    required this.start,
+    required this.end,
+    required this.label,
+  });
+
+  final double start;
+  final double end;
+  final String label;
+
+  factory InsightSegment.fromJson(Map<String, dynamic> json) {
+    return InsightSegment(
+      start: (json['start'] as num).toDouble(),
+      end: (json['end'] as num).toDouble(),
+      label: json['label'].toString(),
+    );
+  }
+}
+
 class AudioAnalysisResponse {
   const AudioAnalysisResponse({
     required this.duration,
@@ -24,9 +44,12 @@ class AudioAnalysisResponse {
     required this.pitchTimes,
     required this.energyRms,
     required this.energyTimes,
+    required this.bassEnergy,
+    required this.bassTimes,
     required this.spectrumFrequencies,
     required this.spectrumFrames,
     required this.insights,
+    required this.insightTimeline,
   });
 
   final double duration;
@@ -37,9 +60,12 @@ class AudioAnalysisResponse {
   final List<double> pitchTimes;
   final List<double> energyRms;
   final List<double> energyTimes;
+  final List<double> bassEnergy;
+  final List<double> bassTimes;
   final List<double> spectrumFrequencies;
   final List<SpectrumFrame> spectrumFrames;
   final List<String> insights;
+  final List<InsightSegment> insightTimeline;
 
   factory AudioAnalysisResponse.fromJson(Map<String, dynamic> json) {
     return AudioAnalysisResponse(
@@ -61,6 +87,12 @@ class AudioAnalysisResponse {
       energyTimes: (json['energy_times'] as List<dynamic>)
           .map((value) => (value as num).toDouble())
           .toList(growable: false),
+        bassEnergy: (json['bass_energy'] as List<dynamic>)
+          .map((value) => (value as num).toDouble())
+          .toList(growable: false),
+        bassTimes: (json['bass_times'] as List<dynamic>)
+          .map((value) => (value as num).toDouble())
+          .toList(growable: false),
       spectrumFrequencies: (json['spectrum_frequencies'] as List<dynamic>)
           .map((value) => (value as num).toDouble())
           .toList(growable: false),
@@ -69,6 +101,9 @@ class AudioAnalysisResponse {
           .toList(growable: false),
       insights: (json['insights'] as List<dynamic>)
           .map((value) => value.toString())
+          .toList(growable: false),
+      insightTimeline: (json['insight_timeline'] as List<dynamic>)
+          .map((segment) => InsightSegment.fromJson(segment as Map<String, dynamic>))
           .toList(growable: false),
     );
   }
