@@ -115,6 +115,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         onSeek: _onSeek,
                       );
 
+                      final mainPanel = Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: mainVisual),
+                          const SizedBox(height: 12),
+                          LyricsPanel(
+                            lyrics: _analysis?.lyrics ?? '',
+                            currentTime: _currentTime,
+                            totalDuration: duration,
+                            maxHeight: isWide ? 140 : 180,
+                          ),
+                        ],
+                      );
+
                       final sidePanel = Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -136,10 +150,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             energyVariance: _energyVariance,
                             pitchRange: _pitchRange,
                           ),
-                          const SizedBox(height: 12),
-                          LyricsPanel(
-                            lyrics: _analysis?.lyrics ?? '',
-                          ),
                         ],
                       );
 
@@ -147,7 +157,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(flex: 3, child: mainVisual),
+                            Expanded(flex: 3, child: mainPanel),
                             const SizedBox(width: 12),
                             Expanded(
                               flex: 2,
@@ -160,7 +170,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       return SingleChildScrollView(
                         child: Column(
                           children: [
-                            mainVisual,
+                            SizedBox(
+                              height: 560,
+                              child: mainPanel,
+                            ),
                             const SizedBox(height: 12),
                             sidePanel,
                           ],
