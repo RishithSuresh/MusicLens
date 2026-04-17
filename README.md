@@ -63,6 +63,7 @@ MusicLens/
   - Bass-reactive particle system
   - Energy-driven color transitions
   - Rule-based section timeline for "What's happening now?"
+  - Best-effort lyrics extraction and dashboard lyrics panel
 
 4. Optional expansions
   - Instrument separation (backend)
@@ -78,6 +79,8 @@ cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+# Optional: install lyrics transcription engine
+pip install -r requirements-lyrics.txt
 uvicorn app.main:app --reload
 ```
 
@@ -151,6 +154,9 @@ Implemented now:
 - Light-themed premium dashboard with interactive reactive visuals
 - Real audio playback synchronized to analytics timeline
 - Rule-based insight timeline and Music DNA summary panel
+- Lyrics/transcription display after audio analysis
+
+Note: lyrics transcription is best-effort and requires optional Whisper installation in the backend environment.
 
 Optional for future:
 - Instrument separation and comparative analytics pages

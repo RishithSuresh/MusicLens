@@ -1,11 +1,109 @@
 from __future__ import annotations
 
 import io
+import tempfile
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import librosa
 import numpy as np
 
 from app.models.analysis import AnalysisResponse, FrequencyBin, InsightSegment
+
+if TYPE_CHECKING:
+    from faster_whisper import WhisperModel
+    from whisper.model import Whisper
+
+
+_WHISPER_MODEL: Whisper | None = None
+_FASTER_WHISPER_MODEL: WhisperModel | None = None
+
+
+def _load_whisper_model() -> Whisper | None:
+    global _WHISPER_MODEL
+    if _WHISPER_MODEL is not None:
+        return _WHISPER_MODEL
+
+    try:
+        import whisper
+    except Exception:  # noqa: BLE001
+        return None
+
+    try:
+        _WHISPER_MODEL = whisper.load_model("tiny")
+    except Exception:  # noqa: BLE001
+        return None
+
+    return _WHISPER_MODEL
+
+
+def _extract_lyrics(audio_bytes: bytes) -> str:
+    # Whisper works with files; use a temporary file to avoid persisting uploads.
+    temp_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            tmp.write(audio_bytes)
+            temp_path = Path(tmp.name)
+
+        text = _transcribe_with_openai_whisper(temp_path)
+        if text:
+            return text
+
+        text = _transcribe_with_faster_whisper(temp_path)
+        if text:
+            return text
+
+        return ""
+    except Exception:  # noqa: BLE001
+        return ""
+    finally:
+        if temp_path is not None and temp_path.exists():
+            try:
+                temp_path.unlink(missing_ok=True)
+            except Exception:  # noqa: BLE001
+                pass
+
+
+def _transcribe_with_openai_whisper(audio_path: Path) -> str:
+    model = _load_whisper_model()
+    if model is None:
+        return ""
+
+    try:
+        result = model.transcribe(str(audio_path), fp16=False)
+        return str(result.get("text", "")).strip()
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def _load_faster_whisper_model() -> WhisperModel | None:
+    global _FASTER_WHISPER_MODEL
+    if _FASTER_WHISPER_MODEL is not None:
+        return _FASTER_WHISPER_MODEL
+
+    try:
+        from faster_whisper import WhisperModel
+    except Exception:  # noqa: BLE001
+        return None
+
+    try:
+        _FASTER_WHISPER_MODEL = WhisperModel("tiny", device="cpu", compute_type="int8")
+    except Exception:  # noqa: BLE001
+        return None
+
+    return _FASTER_WHISPER_MODEL
+
+
+def _transcribe_with_faster_whisper(audio_path: Path) -> str:
+    model = _load_faster_whisper_model()
+    if model is None:
+        return ""
+
+    try:
+        segments, _ = model.transcribe(str(audio_path), beam_size=1)
+        return " ".join(segment.text.strip() for segment in segments if segment.text).strip()
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _normalize(values: np.ndarray) -> np.ndarray:
@@ -155,6 +253,7 @@ def analyze_audio_bytes(audio_bytes: bytes, *, max_spectrum_frames: int = 180) -
         energy_std=float(np.std(rms_normalized)) if rms_normalized.size else 0.0,
     )
     insight_timeline = _build_insight_timeline(rms_times, rms_normalized)
+    lyrics = _extract_lyrics(audio_bytes)
 
     return AnalysisResponse(
         duration=duration,
@@ -171,4 +270,5 @@ def analyze_audio_bytes(audio_bytes: bytes, *, max_spectrum_frames: int = 180) -
         spectrum_frames=spectrum_frames,
         insights=insights,
         insight_timeline=insight_timeline,
+        lyrics=lyrics,
     )

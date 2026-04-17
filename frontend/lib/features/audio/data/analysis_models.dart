@@ -50,6 +50,7 @@ class AudioAnalysisResponse {
     required this.spectrumFrames,
     required this.insights,
     required this.insightTimeline,
+    required this.lyrics,
   });
 
   final double duration;
@@ -66,6 +67,7 @@ class AudioAnalysisResponse {
   final List<SpectrumFrame> spectrumFrames;
   final List<String> insights;
   final List<InsightSegment> insightTimeline;
+  final String lyrics;
 
   factory AudioAnalysisResponse.fromJson(Map<String, dynamic> json) {
     return AudioAnalysisResponse(
@@ -105,6 +107,7 @@ class AudioAnalysisResponse {
       insightTimeline: (json['insight_timeline'] as List<dynamic>)
           .map((segment) => InsightSegment.fromJson(segment as Map<String, dynamic>))
           .toList(growable: false),
+      lyrics: (json['lyrics'] ?? '').toString(),
     );
   }
 }

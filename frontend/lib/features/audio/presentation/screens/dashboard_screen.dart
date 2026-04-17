@@ -10,6 +10,7 @@ import '../../data/audio_api_service.dart';
 import '../../data/audio_playback_service.dart';
 import '../widgets/animated_background.dart';
 import '../widgets/insights_panel.dart';
+import '../widgets/lyrics_panel.dart';
 import '../widgets/metric_chip.dart';
 import '../widgets/music_dna_panel.dart';
 import '../widgets/spectrum_panel.dart';
@@ -134,6 +135,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             energyMean: _energyMean,
                             energyVariance: _energyVariance,
                             pitchRange: _pitchRange,
+                          ),
+                          const SizedBox(height: 12),
+                          LyricsPanel(
+                            lyrics: _analysis?.lyrics ?? '',
                           ),
                         ],
                       );

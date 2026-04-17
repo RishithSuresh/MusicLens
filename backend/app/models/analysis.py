@@ -27,3 +27,4 @@ class AnalysisResponse(BaseModel):
     spectrum_frames: list[FrequencyBin]
     insights: list[str]
     insight_timeline: list[InsightSegment]
+    lyrics: str = Field(default="", description="Best-effort extracted lyrics/transcription")
