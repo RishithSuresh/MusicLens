@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
@@ -235,6 +237,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(_isPlaying ? Icons.pause_circle : Icons.play_circle_fill),
             label: Text(_isPlaying ? 'Pause Audio' : 'Play Audio'),
           ),
+          FilledButton.tonalIcon(
+            onPressed: _analysis == null ? null : _downloadAnalysisJson,
+            icon: const Icon(Icons.download_rounded),
+            label: const Text('Export JSON'),
+          ),
           Text(
             _selectedFile?.name ?? 'No audio selected',
             style: const TextStyle(color: Color(0xFF334155)),
@@ -295,6 +302,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _downloadAnalysisJson() async {
+    final analysis = _analysis;
+    if (analysis == null) {
+      return;
+    }
+
+    try {
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final fileName = 'musiclens-analysis-$timestamp.json';
+      final jsonText = const JsonEncoder.withIndent('  ').convert(_analysisToJson(analysis));
+
+      final savedPath = await FilePicker.saveFile(
+        dialogTitle: 'Save analysis JSON',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        bytes: Uint8List.fromList(utf8.encode(jsonText)),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      final message = savedPath == null
+          ? 'Export cancelled'
+          : 'Analysis JSON exported successfully';
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export JSON: $e')),
+      );
+    }
+  }
+
+  Map<String, dynamic> _analysisToJson(AudioAnalysisResponse analysis) {
+    return {
+      'duration': analysis.duration,
+      'sample_rate': analysis.sampleRate,
+      'bpm': analysis.bpm,
+      'beat_timestamps': analysis.beatTimestamps,
+      'pitch_hz': analysis.pitchHz,
+      'pitch_times': analysis.pitchTimes,
+      'energy_rms': analysis.energyRms,
+      'energy_times': analysis.energyTimes,
+      'bass_energy': analysis.bassEnergy,
+      'bass_times': analysis.bassTimes,
+      'spectrum_frequencies': analysis.spectrumFrequencies,
+      'spectrum_frames': analysis.spectrumFrames
+          .map((frame) => {'time': frame.time, 'magnitudes': frame.magnitudes})
+          .toList(growable: false),
+      'insights': analysis.insights,
+      'insight_timeline': analysis.insightTimeline
+          .map((segment) => {
+                'start': segment.start,
+                'end': segment.end,
+                'label': segment.label,
+              })
+          .toList(growable: false),
+      'lyrics': analysis.lyrics,
+      'exported_at': DateTime.now().toIso8601String(),
+    };
   }
 
   void _togglePlayback() {
