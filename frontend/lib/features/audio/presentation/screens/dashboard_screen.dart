@@ -245,7 +245,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _pickAudio() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       withData: true,
       allowedExtensions: ['mp3', 'wav', 'flac', 'ogg', 'm4a'],

@@ -187,7 +187,9 @@ def analyze_audio_bytes(audio_bytes: bytes, *, max_spectrum_frames: int = 180) -
     y, sr = librosa.load(io.BytesIO(audio_bytes), sr=None, mono=True)
     duration = float(librosa.get_duration(y=y, sr=sr))
 
-    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
+    tempo_raw, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
+    tempo_arr = np.asarray(tempo_raw)
+    tempo = float(tempo_arr.reshape(-1)[0]) if tempo_arr.size else 0.0
     beat_timestamps = librosa.frames_to_time(beat_frames, sr=sr)
 
     try:
