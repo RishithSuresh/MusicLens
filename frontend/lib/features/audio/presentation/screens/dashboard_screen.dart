@@ -17,6 +17,7 @@ import '../widgets/lyrics_panel.dart';
 import '../widgets/metric_chip.dart';
 import '../widgets/music_dna_panel.dart';
 import '../widgets/spectrum_panel.dart';
+import '../widgets/timeline_scrubber.dart';
 import '../widgets/waveform_panel.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -101,6 +102,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
                 child: Column(
                   children: [
+                    TimelineScrubber(
+                      currentTime: _currentTime,
+                      totalDuration: duration,
+                      onSeek: _onSeek,
+                    ),
+                    const SizedBox(height: 8),
                     _buildTopBar(),
                     const SizedBox(height: 16),
                     Wrap(
@@ -157,8 +164,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               InsightsPanel(
                                 currentInsight: _currentInsight,
                                 insights: _analysis?.insights ?? const ['Waiting for analysis...'],
-                                currentTime: _currentTime,
-                                totalDuration: duration,
+                                 currentTime: _currentTime,
+                                 totalDuration: duration,
                               ),
                               const SizedBox(height: 12),
                               MusicDnaPanel(

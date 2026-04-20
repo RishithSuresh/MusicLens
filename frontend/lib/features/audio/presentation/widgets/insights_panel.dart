@@ -49,6 +49,7 @@ class InsightsPanel extends StatelessWidget {
             'Timeline ${currentTime.toStringAsFixed(2)}s / ${totalDuration.toStringAsFixed(2)}s',
             style: theme.textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B)),
           ),
+
           const SizedBox(height: 16),
           Wrap(
             spacing: 8,
