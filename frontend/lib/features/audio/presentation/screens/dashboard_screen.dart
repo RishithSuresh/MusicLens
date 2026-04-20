@@ -11,6 +11,7 @@ import '../../data/analysis_models.dart';
 import '../../data/audio_api_service.dart';
 import '../../data/audio_playback_service.dart';
 import '../widgets/animated_background.dart';
+import '../widgets/beat_synced_pulse_overlay.dart';
 import '../widgets/insights_panel.dart';
 import '../widgets/lyrics_panel.dart';
 import '../widgets/metric_chip.dart';
@@ -36,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _error;
 
   bool _isPlaying = false;
+  bool _pulseEnabled = true;
   double _currentTime = 0;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _stateSub;
@@ -81,120 +83,135 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       body: AnimatedBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-            child: Column(
-              children: [
-                _buildTopBar(),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+        child: Stack(
+          children: [
+            if (_pulseEnabled)
+              Positioned.fill(
+                child: BeatSyncedPulseOverlay(
+                  currentTime: _currentTime,
+                  duration: duration,
+                  beatTimestamps: _analysis?.beatTimestamps ?? const [],
+                  energy: _currentEnergy,
+                  bass: _currentBass,
+                  isPlaying: _isPlaying,
+                ),
+              ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+                child: Column(
                   children: [
-                    MetricChip(label: 'BPM', value: (_analysis?.bpm ?? 0).toStringAsFixed(1)),
-                    MetricChip(label: 'Duration', value: '${duration.toStringAsFixed(1)}s'),
-                    MetricChip(label: 'Sample Rate', value: '${_analysis?.sampleRate ?? 0} Hz'),
-                    MetricChip(label: 'Energy', value: '${(energy * 100).toStringAsFixed(0)}%'),
-                      MetricChip(label: 'Playhead', value: '${_currentTime.toStringAsFixed(2)}s'),
+                    _buildTopBar(),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        MetricChip(label: 'BPM', value: (_analysis?.bpm ?? 0).toStringAsFixed(1)),
+                        MetricChip(label: 'Duration', value: '${duration.toStringAsFixed(1)}s'),
+                        MetricChip(label: 'Sample Rate', value: '${_analysis?.sampleRate ?? 0} Hz'),
+                        MetricChip(label: 'Energy', value: '${(energy * 100).toStringAsFixed(0)}%'),
+                        MetricChip(label: 'Playhead', value: '${_currentTime.toStringAsFixed(2)}s'),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isWide = constraints.maxWidth > 1040;
+
+                          final mainVisual = WaveformPanel(
+                            energy: _analysis?.energyRms ?? const [],
+                            beatTimestamps: _analysis?.beatTimestamps ?? const [],
+                            pitch: _analysis?.pitchHz ?? const [],
+                            duration: duration,
+                            currentTime: _currentTime,
+                            bpm: _analysis?.bpm ?? 0,
+                            currentEnergy: _currentEnergy,
+                            currentBass: _currentBass,
+                            onSeek: _onSeek,
+                          );
+
+                          final mainPanel = Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(child: mainVisual),
+                              const SizedBox(height: 12),
+                              LyricsPanel(
+                                lyrics: _analysis?.lyrics ?? '',
+                                currentTime: _currentTime,
+                                totalDuration: duration,
+                                maxHeight: isWide ? 140 : 180,
+                              ),
+                            ],
+                          );
+
+                          final sidePanel = Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SpectrumPanel(
+                                magnitudes: _spectrumAtCurrentTime,
+                                energy: energy,
+                              ),
+                              const SizedBox(height: 12),
+                              InsightsPanel(
+                                currentInsight: _currentInsight,
+                                insights: _analysis?.insights ?? const ['Waiting for analysis...'],
+                                currentTime: _currentTime,
+                                totalDuration: duration,
+                              ),
+                              const SizedBox(height: 12),
+                              MusicDnaPanel(
+                                bpm: _analysis?.bpm ?? 0,
+                                energyMean: _energyMean,
+                                energyVariance: _energyVariance,
+                                pitchRange: _pitchRange,
+                              ),
+                            ],
+                          );
+
+                          if (isWide) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(flex: 3, child: mainPanel),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 2,
+                                  child: SingleChildScrollView(child: sidePanel),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                SizedBox(
+                                  height: 560,
+                                  child: mainPanel,
+                                ),
+                                const SizedBox(height: 12),
+                                sidePanel,
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.redAccent),
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth > 1040;
-
-                      final mainVisual = WaveformPanel(
-                        energy: _analysis?.energyRms ?? const [],
-                        beatTimestamps: _analysis?.beatTimestamps ?? const [],
-                        pitch: _analysis?.pitchHz ?? const [],
-                        duration: duration,
-                        currentTime: _currentTime,
-                        bpm: _analysis?.bpm ?? 0,
-                        currentEnergy: _currentEnergy,
-                        currentBass: _currentBass,
-                        onSeek: _onSeek,
-                      );
-
-                      final mainPanel = Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: mainVisual),
-                          const SizedBox(height: 12),
-                          LyricsPanel(
-                            lyrics: _analysis?.lyrics ?? '',
-                            currentTime: _currentTime,
-                            totalDuration: duration,
-                            maxHeight: isWide ? 140 : 180,
-                          ),
-                        ],
-                      );
-
-                      final sidePanel = Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SpectrumPanel(
-                            magnitudes: _spectrumAtCurrentTime,
-                            energy: energy,
-                          ),
-                          const SizedBox(height: 12),
-                          InsightsPanel(
-                            currentInsight: _currentInsight,
-                            insights: _analysis?.insights ?? const ['Waiting for analysis...'],
-                            currentTime: _currentTime,
-                            totalDuration: duration,
-                          ),
-                          const SizedBox(height: 12),
-                          MusicDnaPanel(
-                            bpm: _analysis?.bpm ?? 0,
-                            energyMean: _energyMean,
-                            energyVariance: _energyVariance,
-                            pitchRange: _pitchRange,
-                          ),
-                        ],
-                      );
-
-                      if (isWide) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(flex: 3, child: mainPanel),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: SingleChildScrollView(child: sidePanel),
-                            ),
-                          ],
-                        );
-                      }
-
-                      return SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: 560,
-                              child: mainPanel,
-                            ),
-                            const SizedBox(height: 12),
-                            sidePanel,
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                if (_error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.redAccent),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -236,6 +253,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: _analysis == null ? null : _togglePlayback,
             icon: Icon(_isPlaying ? Icons.pause_circle : Icons.play_circle_fill),
             label: Text(_isPlaying ? 'Pause Audio' : 'Play Audio'),
+          ),
+          FilterChip(
+            selected: _pulseEnabled,
+            onSelected: (value) {
+              setState(() {
+                _pulseEnabled = value;
+              });
+            },
+            avatar: const Icon(Icons.bolt_rounded, size: 18),
+            label: const Text('Pulse FX'),
           ),
           FilledButton.tonalIcon(
             onPressed: _analysis == null ? null : _downloadAnalysisJson,
