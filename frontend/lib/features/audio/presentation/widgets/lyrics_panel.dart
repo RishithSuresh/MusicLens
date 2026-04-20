@@ -38,7 +38,7 @@ class LyricsPanel extends StatelessWidget {
     final playedStyle = theme.textTheme.bodyMedium?.copyWith(
       color: const Color(0xFF0F172A),
       height: 1.5,
-      fontWeight: FontWeight.w800,
+      fontWeight: FontWeight.w500,
     );
     final upcomingStyle = theme.textTheme.bodyMedium?.copyWith(
       color: const Color(0xFF64748B),
