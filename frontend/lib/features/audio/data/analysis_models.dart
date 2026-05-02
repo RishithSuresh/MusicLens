@@ -34,6 +34,23 @@ class InsightSegment {
   }
 }
 
+class CategorizedInsight {
+  const CategorizedInsight({
+    required this.text,
+    required this.category,
+  });
+
+  final String text;
+  final String category; // rhythm, melody, energy, structure
+
+  factory CategorizedInsight.fromJson(Map<String, dynamic> json) {
+    return CategorizedInsight(
+      text: json['text'].toString(),
+      category: json['category'].toString(),
+    );
+  }
+}
+
 class AudioAnalysisResponse {
   const AudioAnalysisResponse({
     required this.duration,
@@ -49,7 +66,10 @@ class AudioAnalysisResponse {
     required this.spectrumFrequencies,
     required this.spectrumFrames,
     required this.insights,
+    required this.categorizedInsights,
     required this.insightTimeline,
+    required this.genre,
+    required this.genreConfidence,
     required this.lyrics,
   });
 
@@ -66,7 +86,10 @@ class AudioAnalysisResponse {
   final List<double> spectrumFrequencies;
   final List<SpectrumFrame> spectrumFrames;
   final List<String> insights;
+  final List<CategorizedInsight> categorizedInsights;
   final List<InsightSegment> insightTimeline;
+  final String genre;
+  final double genreConfidence;
   final String lyrics;
 
   factory AudioAnalysisResponse.fromJson(Map<String, dynamic> json) {
@@ -104,9 +127,14 @@ class AudioAnalysisResponse {
       insights: (json['insights'] as List<dynamic>)
           .map((value) => value.toString())
           .toList(growable: false),
+      categorizedInsights: (json['categorized_insights'] as List<dynamic>? ?? <dynamic>[])
+          .map((insight) => CategorizedInsight.fromJson(insight as Map<String, dynamic>))
+          .toList(growable: false),
       insightTimeline: (json['insight_timeline'] as List<dynamic>)
           .map((segment) => InsightSegment.fromJson(segment as Map<String, dynamic>))
           .toList(growable: false),
+      genre: (json['genre'] ?? 'Unknown').toString(),
+      genreConfidence: (json['genre_confidence'] as num? ?? 0.0).toDouble(),
       lyrics: (json['lyrics'] ?? '').toString(),
     );
   }

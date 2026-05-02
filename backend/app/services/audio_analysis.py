@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import librosa
 import numpy as np
 
-from app.models.analysis import AnalysisResponse, FrequencyBin, InsightSegment
+from app.models.analysis import AnalysisResponse, CategorizedInsight, FrequencyBin, InsightSegment
 
 if TYPE_CHECKING:
     from faster_whisper import WhisperModel
@@ -138,6 +138,102 @@ def _build_insights(bpm: float, mean_energy: float, energy_std: float) -> list[s
     return insights
 
 
+def _build_categorized_insights(
+    bpm: float, mean_energy: float, energy_std: float, pitch_range: float, spectral_centroid: float
+) -> list[CategorizedInsight]:
+    """Build insights organized by category for advanced filtering."""
+    insights: list[CategorizedInsight] = []
+
+    # Rhythm insights
+    if bpm >= 140:
+        insights.append(CategorizedInsight(text="Very fast tempo (high energy EDM/techno feel)", category="rhythm"))
+    elif bpm >= 130:
+        insights.append(CategorizedInsight(text="Fast tempo momentum", category="rhythm"))
+    elif bpm >= 100:
+        insights.append(CategorizedInsight(text="Upbeat mid-tempo pace", category="rhythm"))
+    elif bpm >= 80:
+        insights.append(CategorizedInsight(text="Mid-tempo rhythm", category="rhythm"))
+    else:
+        insights.append(CategorizedInsight(text="Slow tempo flow", category="rhythm"))
+
+    # Energy insights
+    if mean_energy > 0.6:
+        insights.append(CategorizedInsight(text="High-energy dynamics - likely chorus or peak section", category="energy"))
+    elif mean_energy > 0.4:
+        insights.append(CategorizedInsight(text="Moderate groove with balanced dynamics", category="energy"))
+    else:
+        insights.append(CategorizedInsight(text="Low intensity passage - intro or quiet breakdown", category="energy"))
+
+    if energy_std > 0.2:
+        insights.append(CategorizedInsight(text="Strong dynamic shifts (possible drops/build-ups)", category="energy"))
+    elif energy_std > 0.1:
+        insights.append(CategorizedInsight(text="Varied energy profile", category="energy"))
+    else:
+        insights.append(CategorizedInsight(text="Consistent energy level throughout", category="energy"))
+
+    # Melody insights
+    if pitch_range > 2000:
+        insights.append(CategorizedInsight(text="Wide melodic range - likely vocal or expressive lead", category="melody"))
+    elif pitch_range > 800:
+        insights.append(CategorizedInsight(text="Moderate pitch variation", category="melody"))
+    else:
+        insights.append(CategorizedInsight(text="Narrow pitch range - instrumental or bassline focused", category="melody"))
+
+    if spectral_centroid > 5000:
+        insights.append(CategorizedInsight(text="Bright, high-frequency content (possibly synths or cymbals)", category="melody"))
+    elif spectral_centroid > 2000:
+        insights.append(CategorizedInsight(text="Balanced frequency distribution", category="melody"))
+    else:
+        insights.append(CategorizedInsight(text="Warm, bass-focused tonality", category="melody"))
+
+    # Structure insights
+    if bpm >= 90 and mean_energy > 0.4:
+        insights.append(CategorizedInsight(text="Likely dance/pop structure with driving rhythm", category="structure"))
+    elif bpm <= 90 and pitch_range > 1000:
+        insights.append(CategorizedInsight(text="Likely acoustic/singer-songwriter structure", category="structure"))
+    else:
+        insights.append(CategorizedInsight(text="Complex harmonic/arrangement structure", category="structure"))
+
+    return insights
+
+
+def _detect_genre(bpm: float, mean_energy: float, energy_std: float, spectral_centroid: float) -> tuple[str, float]:
+    """Detect music genre based on audio features. Returns (genre, confidence)."""
+    confidence = 0.0
+    genre = "Unknown"
+
+    # Genre detection heuristics based on BPM, energy, and spectral characteristics
+    if 120 <= bpm <= 150 and mean_energy > 0.5 and energy_std > 0.15:
+        genre = "Electronic/EDM"
+        confidence = min(0.9, 0.5 + abs(bpm - 130) / 100 + mean_energy * 0.3)
+    elif 85 <= bpm <= 115 and mean_energy > 0.45 and spectral_centroid > 3000:
+        genre = "Pop"
+        confidence = min(0.85, 0.5 + abs(bpm - 100) / 100 + mean_energy * 0.25)
+    elif 60 <= bpm <= 100 and mean_energy < 0.4 and spectral_centroid < 3000:
+        genre = "R&B/Soul"
+        confidence = min(0.8, 0.5 + (0.4 - mean_energy) * 0.5)
+    elif 160 <= bpm <= 180 and energy_std > 0.2 and mean_energy > 0.6:
+        genre = "Hip-Hop"
+        confidence = min(0.85, 0.5 + abs(bpm - 170) / 100 + mean_energy * 0.3)
+    elif bpm <= 100 and mean_energy < 0.35 and spectral_centroid < 2000:
+        genre = "Jazz/Blues"
+        confidence = min(0.75, 0.45 + (0.35 - mean_energy) * 0.5)
+    elif bpm <= 80 and mean_energy < 0.3 and energy_std < 0.1:
+        genre = "Classical/Acoustic"
+        confidence = min(0.8, 0.4 + (0.3 - mean_energy) * 0.3)
+    elif 130 <= bpm <= 160 and mean_energy > 0.55 and energy_std > 0.18:
+        genre = "House/Techno"
+        confidence = min(0.85, 0.5 + abs(bpm - 145) / 100)
+    elif 90 <= bpm <= 110 and mean_energy > 0.5:
+        genre = "Rock"
+        confidence = min(0.8, 0.5 + mean_energy * 0.2)
+    else:
+        genre = "Experimental"
+        confidence = 0.4
+
+    return genre, max(0.0, min(1.0, confidence))
+
+
 def _label_for_energy(energy: float, delta: float) -> str:
     if energy > 0.72:
         return "High energy chorus"
@@ -223,6 +319,9 @@ def analyze_audio_bytes(audio_bytes: bytes, *, max_spectrum_frames: int = 180) -
     freqs = librosa.fft_frequencies(sr=sr, n_fft=2048)
     frame_times = librosa.frames_to_time(np.arange(stft_db_norm.shape[1]), sr=sr)
 
+    # Calculate spectral centroid for genre detection
+    spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=y, sr=sr))
+
     bass_band_mask = freqs <= 200
     bass_energy = np.mean(stft_db_norm[bass_band_mask, :], axis=0) if np.any(bass_band_mask) else np.zeros(stft_db_norm.shape[1])
     bass_energy = _normalize(bass_energy)
@@ -254,6 +353,26 @@ def analyze_audio_bytes(audio_bytes: bytes, *, max_spectrum_frames: int = 180) -
         mean_energy=float(np.mean(rms_normalized)) if rms_normalized.size else 0.0,
         energy_std=float(np.std(rms_normalized)) if rms_normalized.size else 0.0,
     )
+
+    mean_energy = float(np.mean(rms_normalized)) if rms_normalized.size else 0.0
+    energy_std = float(np.std(rms_normalized)) if rms_normalized.size else 0.0
+    pitch_range = float(np.ptp(pitch_hz[pitch_hz > 0])) if np.any(pitch_hz > 0) else 0.0
+
+    categorized_insights = _build_categorized_insights(
+        bpm=float(tempo),
+        mean_energy=mean_energy,
+        energy_std=energy_std,
+        pitch_range=pitch_range,
+        spectral_centroid=float(spectral_centroid),
+    )
+
+    genre, genre_confidence = _detect_genre(
+        bpm=float(tempo),
+        mean_energy=mean_energy,
+        energy_std=energy_std,
+        spectral_centroid=float(spectral_centroid),
+    )
+
     insight_timeline = _build_insight_timeline(rms_times, rms_normalized)
     lyrics = _extract_lyrics(audio_bytes)
 
@@ -271,6 +390,9 @@ def analyze_audio_bytes(audio_bytes: bytes, *, max_spectrum_frames: int = 180) -
         spectrum_frequencies=spectrum_frequencies.astype(float).tolist(),
         spectrum_frames=spectrum_frames,
         insights=insights,
+        categorized_insights=categorized_insights,
+        genre=genre,
+        genre_confidence=genre_confidence,
         insight_timeline=insight_timeline,
         lyrics=lyrics,
     )

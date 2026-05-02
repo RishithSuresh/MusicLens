@@ -118,6 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         MetricChip(label: 'Duration', value: '${duration.toStringAsFixed(1)}s'),
                         MetricChip(label: 'Sample Rate', value: '${_analysis?.sampleRate ?? 0} Hz'),
                         MetricChip(label: 'Energy', value: '${(energy * 100).toStringAsFixed(0)}%'),
+                        MetricChip(label: 'Genre', value: _analysis?.genre ?? 'Unknown'),
                         MetricChip(label: 'Playhead', value: '${_currentTime.toStringAsFixed(2)}s'),
                       ],
                     ),
@@ -164,8 +165,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               InsightsPanel(
                                 currentInsight: _currentInsight,
                                 insights: _analysis?.insights ?? const ['Waiting for analysis...'],
-                                 currentTime: _currentTime,
-                                 totalDuration: duration,
+                                categorizedInsights: _analysis?.categorizedInsights ?? const [],
+                                currentTime: _currentTime,
+                                totalDuration: duration,
                               ),
                               const SizedBox(height: 12),
                               MusicDnaPanel(
