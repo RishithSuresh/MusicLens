@@ -37,34 +37,72 @@ class LyricsPanel extends StatelessWidget {
 
     final playedStyle = theme.textTheme.bodyMedium?.copyWith(
       color: const Color(0xFF0F172A),
-      height: 1.5,
-      fontWeight: FontWeight.w500,
+      height: 1.6,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.2,
     );
     final upcomingStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: const Color(0xFF64748B),
-      height: 1.5,
+      color: const Color(0xFFCBD5E1),
+      height: 1.6,
       fontWeight: FontWeight.w500,
+      letterSpacing: 0.1,
     );
 
     return GlassCard(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: 0.75),
+          Colors.white.withValues(alpha: 0.60),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Lyrics',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            children: [
+              Icon(
+                Icons.lyrics_rounded,
+                size: 22,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Lyrics & Transcription',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Container(
             width: double.infinity,
             constraints: BoxConstraints(maxHeight: maxHeight),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.78),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.85),
+                  Colors.white.withValues(alpha: 0.75),
+                ],
+              ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFD8E4F5)),
+              border: Border.all(
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3B82F6).withValues(alpha: 0.08),
+                  offset: const Offset(0, 4),
+                  blurRadius: 16,
+                ),
+              ],
             ),
             child: SingleChildScrollView(
               child: RichText(

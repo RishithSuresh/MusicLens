@@ -227,62 +227,137 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildTopBar() {
+    final theme = Theme.of(context);
     return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: 0.8),
+          Colors.white.withValues(alpha: 0.65),
+        ],
+      ),
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 12,
-        runSpacing: 12,
+        spacing: 14,
+        runSpacing: 14,
         children: [
-          Text(
-            'MusicLens',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF0F172A),
+          ShaderMask(
+            shaderCallback: (bounds) {
+              return const LinearGradient(
+                colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+              ).createShader(bounds);
+            },
+            child: Text(
+              'MusicLens',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
-          const SizedBox(width: 2),
-          FilledButton.icon(
+          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+          _buildActionButton(
             onPressed: _pickAudio,
-            icon: const Icon(Icons.audio_file_rounded),
-            label: Text(_selectedFile == null ? 'Select Audio' : 'Change Audio'),
+            icon: Icons.audio_file_rounded,
+            label: _selectedFile == null ? 'Select' : 'Change',
+            theme: theme,
           ),
-          FilledButton.tonalIcon(
+          _buildActionButton(
             onPressed: _selectedFile == null || _isLoading ? null : _analyze,
-            icon: _isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.analytics_outlined),
-            label: const Text('Analyze'),
+            icon: _isLoading ? null : Icons.analytics_outlined,
+            label: 'Analyze',
+            theme: theme,
+            isLoading: _isLoading,
           ),
-          FilledButton.tonalIcon(
+          _buildActionButton(
             onPressed: _analysis == null ? null : _togglePlayback,
-            icon: Icon(_isPlaying ? Icons.pause_circle : Icons.play_circle_fill),
-            label: Text(_isPlaying ? 'Pause Audio' : 'Play Audio'),
+            icon: _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            label: _isPlaying ? 'Pause' : 'Play',
+            theme: theme,
+            isPrimary: _analysis != null,
           ),
-          FilterChip(
+          _EnhancedToggleChip(
             selected: _pulseEnabled,
             onSelected: (value) {
               setState(() {
                 _pulseEnabled = value;
               });
             },
-            avatar: const Icon(Icons.bolt_rounded, size: 18),
-            label: const Text('Pulse FX'),
+            icon: Icons.bolt_rounded,
+            label: 'Pulse FX',
           ),
-          FilledButton.tonalIcon(
+          _buildActionButton(
             onPressed: _analysis == null ? null : _downloadAnalysisJson,
-            icon: const Icon(Icons.download_rounded),
-            label: const Text('Export JSON'),
+            icon: Icons.download_rounded,
+            label: 'Export',
+            theme: theme,
           ),
-          Text(
-            _selectedFile?.name ?? 'No audio selected',
-            style: const TextStyle(color: Color(0xFF334155)),
+          Tooltip(
+            message: _selectedFile?.name ?? 'No audio selected',
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFFF1F5F9).withValues(alpha: 0.8),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                ((_selectedFile?.name?.length ?? 0) > 20)
+                    ? '${_selectedFile!.name!.substring(0, 17)}...'
+                    : (_selectedFile?.name ?? 'No file'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: const Color(0xFF475569),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required VoidCallback? onPressed,
+    required IconData? icon,
+    required String label,
+    required ThemeData theme,
+    bool isPrimary = false,
+    bool isLoading = false,
+  }) {
+    return FilledButton.icon(
+      onPressed: onPressed,
+      icon: isLoading
+          ? SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  theme.colorScheme.onPrimary,
+                ),
+              ),
+            )
+          : Icon(icon, size: 18),
+      label: Text(label),
+      style: FilledButton.styleFrom(
+        backgroundColor: isPrimary ? theme.colorScheme.primary : const Color(0xFFF1F5F9),
+        foregroundColor: isPrimary ? Colors.white : theme.colorScheme.primary,
+        elevation: isPrimary ? 6 : 2,
+        shadowColor: isPrimary
+            ? theme.colorScheme.primary.withValues(alpha: 0.4)
+            : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -527,5 +602,91 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return 'Steady rhythmic section';
     }
     return 'Low intensity intro';
+  }
+}
+
+class _EnhancedToggleChip extends StatefulWidget {
+  const _EnhancedToggleChip({
+    required this.selected,
+    required this.onSelected,
+    required this.icon,
+    required this.label,
+  });
+
+  final bool selected;
+  final ValueChanged<bool> onSelected;
+  final IconData icon;
+  final String label;
+
+  @override
+  State<_EnhancedToggleChip> createState() => _EnhancedToggleChipState();
+}
+
+class _EnhancedToggleChipState extends State<_EnhancedToggleChip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, _) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: FilterChip(
+            selected: widget.selected,
+            onSelected: (value) {
+              if (value) {
+                _controller.forward();
+              } else {
+                _controller.reverse();
+              }
+              widget.onSelected(value);
+            },
+            avatar: Icon(
+              widget.icon,
+              size: 18,
+              color: widget.selected ? Colors.white : const Color(0xFF3B82F6),
+            ),
+            label: Text(
+              widget.label,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: widget.selected ? Colors.white : const Color(0xFF3B82F6),
+              ),
+            ),
+            backgroundColor: Colors.white.withValues(alpha: 0.7),
+            selectedColor: const Color(0xFF3B82F6),
+            side: BorderSide(
+              color: widget.selected
+                  ? const Color(0xFF3B82F6)
+                  : const Color(0xFF3B82F6).withValues(alpha: 0.3),
+              width: widget.selected ? 2 : 1.5,
+            ),
+            elevation: widget.selected ? 6 : 2,
+            pressElevation: 8,
+          ),
+        );
+      },
+    );
   }
 }
