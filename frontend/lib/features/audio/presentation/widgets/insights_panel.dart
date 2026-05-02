@@ -34,7 +34,7 @@ class _InsightsPanelState extends State<InsightsPanel> with SingleTickerProvider
   void initState() {
     super.initState();
     _insightController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 260),
       vsync: this,
     )..forward();
   }
@@ -239,7 +239,7 @@ class _InsightBubbleState extends State<_InsightBubble> with SingleTickerProvide
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 320),
       vsync: this,
     );
 

@@ -35,7 +35,8 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, _) {
+      child: RepaintBoundary(child: widget.child),
+      builder: (context, child) {
         final wave1 = math.sin(_controller.value * math.pi * 2);
         final wave2 = math.cos(_controller.value * math.pi * 2 + math.pi / 3);
         final wave3 = math.sin(_controller.value * math.pi * 2 + math.pi * 2 / 3);
@@ -62,32 +63,32 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                 left: 40 + (40 * wave1),
                 top: 60,
                 size: 280,
-                blur: 52,
-                opacity: 0.25,
+                blur: 42,
+                opacity: 0.20,
               ),
               _AnimatedBlob(
                 color: const Color(0xFF8B5CF6),
                 left: 380 + (50 * wave2),
                 top: 180 + (30 * wave1),
                 size: 320,
-                blur: 58,
-                opacity: 0.22,
+                blur: 46,
+                opacity: 0.18,
               ),
               _AnimatedBlob(
                 color: const Color(0xFFEC4899),
                 left: 150 + (45 * wave3),
                 top: 520 - (40 * wave2),
                 size: 260,
-                blur: 50,
-                opacity: 0.20,
+                blur: 40,
+                opacity: 0.16,
               ),
               _AnimatedBlob(
                 color: const Color(0xFF06B6D4),
                 left: 600 + (35 * wave1),
                 top: 400 + (25 * wave3),
                 size: 240,
-                blur: 48,
-                opacity: 0.18,
+                blur: 38,
+                opacity: 0.14,
               ),
               // Wave pattern overlay
               Positioned.fill(
@@ -105,7 +106,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                   painter: _MeshGridPainter(progress: _controller.value),
                 ),
               ),
-              widget.child,
+              if (child != null) child,
             ],
           ),
         );

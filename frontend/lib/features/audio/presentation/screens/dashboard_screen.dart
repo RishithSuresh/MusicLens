@@ -138,21 +138,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             currentEnergy: _currentEnergy,
                             currentBass: _currentBass,
                             onSeek: _onSeek,
+                            compact: !isWide,
                           );
 
-                          final mainPanel = Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(child: mainVisual),
-                              const SizedBox(height: 12),
-                              LyricsPanel(
-                                lyrics: _analysis?.lyrics ?? '',
-                                currentTime: _currentTime,
-                                totalDuration: duration,
-                                maxHeight: isWide ? 140 : 180,
-                              ),
-                            ],
-                          );
+                          final mainPanel = isWide
+                              ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Expanded(child: mainVisual),
+                                    const SizedBox(height: 12),
+                                    LyricsPanel(
+                                      lyrics: _analysis?.lyrics ?? '',
+                                      currentTime: _currentTime,
+                                      totalDuration: duration,
+                                      maxHeight: 140,
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    mainVisual,
+                                    const SizedBox(height: 12),
+                                    LyricsPanel(
+                                      lyrics: _analysis?.lyrics ?? '',
+                                      currentTime: _currentTime,
+                                      totalDuration: duration,
+                                      maxHeight: 110,
+                                    ),
+                                  ],
+                                );
 
                           final sidePanel = Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,12 +209,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           }
 
                           return SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                SizedBox(
-                                  height: 560,
-                                  child: mainPanel,
-                                ),
+                                mainPanel,
                                 const SizedBox(height: 12),
                                 sidePanel,
                               ],

@@ -17,7 +17,7 @@ class TimelineScrubber extends StatefulWidget {
 }
 
 class _TimelineScrubberState extends State<TimelineScrubber> {
-  late double _draggedTime;
+  double _draggedTime = 0;
   bool _isDragging = false;
 
   @override
@@ -34,8 +34,11 @@ class _TimelineScrubberState extends State<TimelineScrubber> {
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onHorizontalDragStart: (details) {
-              _isDragging = true;
+              setState(() {
+                _isDragging = true;
+              });
               _updateTimeFromPosition(details.globalPosition);
             },
             onHorizontalDragUpdate: (details) {
@@ -105,6 +108,9 @@ class _TimelineScrubberState extends State<TimelineScrubber> {
 
     final localPosition = box.globalToLocal(globalPosition);
     final containerWidth = box.size.width - 40; // Subtract horizontal padding
+    if (containerWidth <= 0) {
+      return;
+    }
     final fraction = (localPosition.dx - 20) / containerWidth;
     final clampedFraction = fraction.clamp(0.0, 1.0);
 

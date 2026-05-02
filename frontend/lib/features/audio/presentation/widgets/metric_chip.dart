@@ -27,7 +27,7 @@ class _MetricChipState extends State<MetricChip> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 220),
       vsync: this,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
@@ -82,8 +82,8 @@ class _MetricChipState extends State<MetricChip> with SingleTickerProviderStateM
                   BoxShadow(
                     color: accentColor.withValues(alpha: _isHovered ? 0.25 : 0.10),
                     offset: const Offset(0, 8),
-                    blurRadius: _isHovered ? 24 : 12,
-                    spreadRadius: _isHovered ? 1 : 0,
+                    blurRadius: _isHovered ? 18 : 10,
+                    spreadRadius: 0,
                   ),
                 ],
               ),

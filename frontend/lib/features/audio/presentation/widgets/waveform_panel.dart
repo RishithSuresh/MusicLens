@@ -17,6 +17,7 @@ class WaveformPanel extends StatefulWidget {
     required this.currentBass,
     required this.onSeek,
     super.key,
+    this.compact = false,
   });
 
   final List<double> energy;
@@ -28,6 +29,7 @@ class WaveformPanel extends StatefulWidget {
   final double currentEnergy;
   final double currentBass;
   final ValueChanged<double> onSeek;
+  final bool compact;
 
   @override
   State<WaveformPanel> createState() => _WaveformPanelState();
@@ -57,53 +59,68 @@ class _WaveformPanelState extends State<WaveformPanel> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Interactive Waveform',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 12),
+              if (!widget.compact) ...[
+                Text(
+                  'Interactive Waveform',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+              ],
               MouseRegion(
+                opaque: true,
                 onHover: (event) {
-                  setState(() {
-                    _hoverX = event.localPosition.dx.clamp(0.0, width);
-                  });
+                  final nextX = event.localPosition.dx.clamp(0.0, width);
+                  if (_hoverX == null || (_hoverX! - nextX).abs() > 0.75) {
+                    setState(() {
+                      _hoverX = nextX;
+                    });
+                  }
                 },
                 onExit: (_) => setState(() => _hoverX = null),
                 child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTapDown: (details) => _seekFromLocalX(details.localPosition.dx, width),
                   onHorizontalDragUpdate: (details) => _seekFromLocalX(details.localPosition.dx, width),
                   child: SizedBox(
-                    height: 220,
+                    height: widget.compact ? 216 : 270,
                     width: double.infinity,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: ReactiveParticleField(intensity: widget.currentBass),
-                        ),
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: _WaveformPainter(
-                              energy: values,
-                              pitch: pitch,
-                              beatTimestamps: widget.beatTimestamps,
-                              duration: widget.duration,
-                              currentTime: widget.currentTime,
-                              currentEnergy: widget.currentEnergy,
+                    child: ClipRect(
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: RepaintBoundary(
+                              child: ReactiveParticleField(intensity: widget.currentBass),
                             ),
                           ),
-                        ),
-                        if (_hoverX != null && hoverTime != null)
-                          Positioned(
-                            left: (_hoverX! + 8).clamp(0, width - 150),
-                            top: 8,
-                            child: _HoverTooltip(
-                              bpm: widget.bpm,
-                              time: hoverTime,
-                              pitch: _valueAtTime(pitch, hoverTime),
-                              energy: _valueAtTime(values, hoverTime),
+                          Positioned.fill(
+                            child: RepaintBoundary(
+                              child: CustomPaint(
+                                painter: _WaveformPainter(
+                                  energy: values,
+                                  pitch: pitch,
+                                  beatTimestamps: widget.beatTimestamps,
+                                  duration: widget.duration,
+                                  currentTime: widget.currentTime,
+                                  currentEnergy: widget.currentEnergy,
+                                ),
+                              ),
                             ),
                           ),
-                      ],
+                          if (_hoverX != null && hoverTime != null)
+                            Positioned(
+                              left: (_hoverX! + 8).clamp(0, width - 150),
+                              top: widget.compact ? 10 : 12,
+                              child: RepaintBoundary(
+                                child: _HoverTooltip(
+                                  bpm: widget.bpm,
+                                  time: hoverTime,
+                                  pitch: _valueAtTime(pitch, hoverTime),
+                                  energy: _valueAtTime(values, hoverTime),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -31,7 +31,7 @@ class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMix
   void initState() {
     super.initState();
     _hoverController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 180),
       vsync: this,
     );
     _hoverAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
@@ -68,7 +68,7 @@ class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMix
             child: ClipRRect(
               borderRadius: widget.borderRadius,
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
                   padding: widget.padding,
                   decoration: BoxDecoration(
@@ -91,15 +91,15 @@ class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMix
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF3B82F6).withValues(alpha: _isHovered ? 0.25 : 0.12),
+                        color: const Color(0xFF3B82F6).withValues(alpha: _isHovered ? 0.18 : 0.1),
                         offset: const Offset(0, 12),
-                        blurRadius: _isHovered ? 48 : 32,
-                        spreadRadius: _isHovered ? 2 : 0,
+                        blurRadius: _isHovered ? 34 : 24,
+                        spreadRadius: 0,
                       ),
                       BoxShadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: _isHovered ? 0.15 : 0.08),
-                        offset: const Offset(0, 20),
-                        blurRadius: _isHovered ? 32 : 20,
+                        color: const Color(0xFF8B5CF6).withValues(alpha: _isHovered ? 0.1 : 0.06),
+                        offset: const Offset(0, 16),
+                        blurRadius: _isHovered ? 24 : 16,
                       ),
                     ],
                   ),

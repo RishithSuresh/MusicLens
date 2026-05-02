@@ -31,21 +31,11 @@ class LyricsPanel extends StatelessWidget {
         ? lyrics
         : 'No lyrics detected yet. Try a clearer vocal track for better transcription.';
 
-    final splitIndex = (fullText.length * _playedFraction).round().clamp(0, fullText.length);
-    final playedText = fullText.substring(0, splitIndex);
-    final upcomingText = fullText.substring(splitIndex);
-
-    final playedStyle = theme.textTheme.bodyMedium?.copyWith(
+    final lyricStyle = theme.textTheme.bodyMedium?.copyWith(
       color: const Color(0xFF0F172A),
       height: 1.6,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w700,
       letterSpacing: 0.2,
-    );
-    final upcomingStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: const Color(0xFFCBD5E1),
-      height: 1.6,
-      fontWeight: FontWeight.w500,
-      letterSpacing: 0.1,
     );
 
     return GlassCard(
@@ -105,12 +95,11 @@ class LyricsPanel extends StatelessWidget {
               ],
             ),
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: RichText(
                 text: TextSpan(
-                  children: [
-                    TextSpan(text: playedText, style: playedStyle),
-                    TextSpan(text: upcomingText, style: upcomingStyle),
-                  ],
+                  text: fullText,
+                  style: lyricStyle,
                 ),
               ),
             ),
