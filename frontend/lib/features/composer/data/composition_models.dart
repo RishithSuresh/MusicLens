@@ -2,6 +2,36 @@
 ///
 /// Kept intentionally small and JSON-shape-compatible with the FastAPI
 /// payload returned by the `POST /compose` endpoint.
+
+/// Randomly generated composition parameters returned by `GET /random-prompt`.
+class RandomPromptResponse {
+  const RandomPromptResponse({
+    required this.prompt,
+    required this.style,
+    required this.key,
+    required this.mode,
+    required this.tempoBpm,
+    required this.bars,
+  });
+
+  final String prompt;
+  final String style;
+  final String key;
+  final String mode;
+  final int tempoBpm;
+  final int bars;
+
+  factory RandomPromptResponse.fromJson(Map<String, dynamic> json) {
+    return RandomPromptResponse(
+      prompt: json['prompt'].toString(),
+      style: json['style'].toString(),
+      key: json['key'].toString(),
+      mode: json['mode'].toString(),
+      tempoBpm: (json['tempo_bpm'] as num).toInt(),
+      bars: (json['bars'] as num).toInt(),
+    );
+  }
+}
 class CompositionNote {
   const CompositionNote({
     required this.pitch,
