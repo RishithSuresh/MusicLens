@@ -24,6 +24,8 @@ class ComposerScreen extends StatefulWidget {
 }
 
 class _ComposerScreenState extends State<ComposerScreen> {
+  static const int _compositionIdPrefixLength = 8;
+
   final ComposerApiService _api = ComposerApiService();
   final AudioPlaybackService _audioService = AudioPlaybackService();
 
@@ -34,6 +36,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
 
   Duration _elapsed = Duration.zero;
   bool _playing = false;
+  int _maxPlaybackMs = 0;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _stateSub;
 
@@ -47,8 +50,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
         setState(() => _elapsed = position);
         return;
       }
-      final maxMs = (c.metadata.totalBeats / c.metadata.tempoBpm * 60 * 1000).round();
-      final bounded = position.inMilliseconds.clamp(0, maxMs);
+      final bounded = position.inMilliseconds.clamp(0, _maxPlaybackMs);
       setState(() => _elapsed = Duration(milliseconds: bounded));
     });
     _stateSub = _audioService.stateStream.listen((state) {
@@ -147,6 +149,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
         _elapsed = Duration.zero;
         _playing = false;
         _isAudioPrepared = isAudioPrepared;
+        _maxPlaybackMs = (result.metadata.totalBeats / result.metadata.tempoBpm * 60 * 1000).round();
         _error = audioError;
       });
     } catch (e) {
@@ -161,7 +164,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
     if (c == null) return;
     try {
       final bytes = base64Decode(c.midiBase64);
-      final fileName = 'musiclens-composition-${c.compositionId.substring(0, 8)}.mid';
+      final fileName = 'musiclens-composition-${c.compositionId.substring(0, _compositionIdPrefixLength)}.mid';
       final saved = await FilePicker.saveFile(
         dialogTitle: 'Save MIDI file',
         fileName: fileName,
@@ -186,7 +189,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
     if (c == null || mp3Base64 == null || mp3Base64.isEmpty) return;
     try {
       final bytes = base64Decode(mp3Base64);
-      final fileName = 'musiclens-composition-${c.compositionId.substring(0, 8)}.mp3';
+      final fileName = 'musiclens-composition-${c.compositionId.substring(0, _compositionIdPrefixLength)}.mp3';
       final saved = await FilePicker.saveFile(
         dialogTitle: 'Save MP3 file',
         fileName: fileName,
@@ -393,7 +396,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
                     ? 'Play generated MP3 preview'
                     : 'MP3 preview unavailable for this composition',
                 child: IconButton(
-                  onPressed: _isAudioPrepared ? () => _togglePlay() : null,
+                  onPressed: _isAudioPrepared ? _togglePlay : null,
                   icon: Icon(_playing ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded),
                   color: const Color(0xFF3B82F6),
                   iconSize: 36,

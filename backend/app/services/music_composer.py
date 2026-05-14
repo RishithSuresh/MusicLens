@@ -248,7 +248,9 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                     os.remove(mp3_path)
                 return mp3_bytes
             else:
-                raise ValueError("Generated MP3 data too small")
+                raise ValueError(
+                    f"Generated MP3 data too small: {len(mp3_bytes)} bytes (minimum: 100)"
+                )
 
         except Exception as e:
             print(f"Warning: Failed to encode MP3 ({e}).")
