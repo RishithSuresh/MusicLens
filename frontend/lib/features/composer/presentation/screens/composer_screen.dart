@@ -458,12 +458,12 @@ class _ComposerScreenState extends State<ComposerScreen> {
                  const SizedBox(width: 8),
                  Expanded(
                    child: Text(
-                     _isAudioPrepared
-                         ? 'Playing synthesized MP3 preview in-app. Export MIDI for DAWs and MIDI editors.'
-                         : 'MP3 preview unavailable from backend synthesis. You can still export MIDI.',
-                     style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                   ),
-                 ),
+                      _isAudioPrepared
+                          ? 'Playing synthesized MP3 preview in-app. Export MIDI for DAWs and MIDI editors.'
+                          : 'MP3 preview unavailable due to backend synthesis failure. You can still export MIDI.',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ),
                ],
              ),
           ),
