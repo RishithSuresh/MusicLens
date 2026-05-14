@@ -58,7 +58,7 @@ _RANDOM_PROMPTS = [
 _RANDOM_STYLES = ["pop", "rock", "jazz", "blues", "lofi", "cinematic", "classical", "electronic", "folk", "ambient"]
 _RANDOM_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
 _RANDOM_MODES = ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "harmonic_minor"]
-_RANDOM_TEMPOS = list(range(60, 181, 5))
+_RANDOM_TEMPOS = list(range(50, 181, 5))
 _RANDOM_BARS = [8, 12, 16, 20, 24, 32]
 
 

@@ -9,8 +9,9 @@ class CompositionForm extends StatefulWidget {
   const CompositionForm({
     required this.onSubmit,
     required this.isLoading,
+    ComposerApiService? apiService,
     super.key,
-  });
+  }) : _apiService = apiService;
 
   final void Function({
     required String prompt,
@@ -23,13 +24,14 @@ class CompositionForm extends StatefulWidget {
   }) onSubmit;
 
   final bool isLoading;
+  final ComposerApiService? _apiService;
 
   @override
   State<CompositionForm> createState() => _CompositionFormState();
 }
 
 class _CompositionFormState extends State<CompositionForm> {
-  final ComposerApiService _api = ComposerApiService();
+  late final ComposerApiService _api = widget._apiService ?? ComposerApiService();
   final TextEditingController _promptCtrl = TextEditingController(
     text: 'A hopeful uplifting lo-fi piano piece for a sunny morning',
   );
@@ -72,8 +74,11 @@ class _CompositionFormState extends State<CompositionForm> {
         _tempo = rp.tempoBpm.toDouble().clamp(50, 180);
         _bars = rp.bars.toDouble().clamp(8, 32);
       });
-    } catch (_) {
-      // silently ignore; user can retry
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not fetch random prompt. Please try again.')),
+      );
     } finally {
       if (mounted) setState(() => _isRandomizing = false);
     }
