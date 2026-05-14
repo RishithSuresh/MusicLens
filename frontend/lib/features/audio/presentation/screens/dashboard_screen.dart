@@ -322,8 +322,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               child: Text(
-                ((_selectedFile?.name?.length ?? 0) > 20)
-                    ? '${_selectedFile!.name!.substring(0, 17)}...'
+                ((_selectedFile?.name.length ?? 0) > 20)
+                    ? '${_selectedFile?.name.substring(0, 17) ?? ''}...'
                     : (_selectedFile?.name ?? 'No file'),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF475569),

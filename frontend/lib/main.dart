@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
-import 'features/audio/presentation/screens/dashboard_screen.dart';
+import 'core/widgets/home_shell.dart';
 
 void main() {
   runApp(const MusicLensApp());
@@ -16,7 +16,7 @@ class MusicLensApp extends StatelessWidget {
       title: 'MusicLens',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const DashboardScreen(),
+      home: const HomeShell(),
     );
   }
 }

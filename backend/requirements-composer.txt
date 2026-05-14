@@ -1,0 +1,12 @@
+# Optional dependencies for the AI Music Compositor feature.
+# Install only if you want the /compose endpoint enabled.
+#
+# music21 is required to render MIDI output.
+# langgraph + langchain-openai are only used when an OPENAI_API_KEY is set;
+# if they are missing the compositor falls back to a deterministic procedural
+# engine (no LLM required).
+music21==9.1.0
+langgraph==0.2.50
+langchain-openai==0.2.10
+langchain-core==0.3.20
+python-dotenv==1.0.1

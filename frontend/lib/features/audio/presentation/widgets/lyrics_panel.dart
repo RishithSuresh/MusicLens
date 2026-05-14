@@ -16,13 +16,6 @@ class LyricsPanel extends StatelessWidget {
   final double totalDuration;
   final double maxHeight;
 
-  double get _playedFraction {
-    if (totalDuration <= 0) {
-      return 0;
-    }
-    return (currentTime / totalDuration).clamp(0.0, 1.0);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

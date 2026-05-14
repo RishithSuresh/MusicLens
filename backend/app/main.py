@@ -6,6 +6,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.analysis import AnalysisResponse
+from app.models.composition import CompositionRequest, CompositionResponse
 from app.services.audio_analysis import analyze_audio_bytes
 
 app = FastAPI(title="MusicLens API", version="0.1.0")
@@ -76,3 +77,30 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
         return response
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Audio analysis failed: {exc}") from exc
+
+
+@app.post("/compose", response_model=CompositionResponse)
+def compose(request: CompositionRequest) -> CompositionResponse:
+    """Generate a multi-track composition from a natural-language prompt.
+
+    Optional dependencies (``music21`` and the LangGraph stack) must be
+    installed for this endpoint; see ``backend/requirements-composer.txt``.
+    """
+    import sys
+    print(f"DEBUG: sys.executable = {sys.executable}", file=sys.stderr)
+    print(f"DEBUG: sys.path = {sys.path}", file=sys.stderr)
+    try:
+        from app.services.music_composer import compose as run_compose
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Music composer dependencies are not installed. "
+                "Run: pip install -r requirements-composer.txt"
+            ),
+        ) from exc
+
+    try:
+        return run_compose(request)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Composition failed: {exc}") from exc

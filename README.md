@@ -1,8 +1,12 @@
-# MusicLens - Interactive Visual Music Explainer
+# MusicLens - Interactive Visual Music Explainer & AI Compositor
 
 MusicLens is a two-part system:
-- FastAPI backend for audio feature extraction and rule-based music insight generation.
-- Flutter frontend (light-themed premium dashboard style) for interactive visual exploration.
+- FastAPI backend for audio feature extraction, rule-based music insight
+  generation, and an AI Music Compositor (LangGraph + procedural engine).
+- Flutter frontend (light-themed premium dashboard style) with two tabs:
+  **Analyze** (interactive visual exploration of an uploaded track) and
+  **Compose** (prompt-driven multi-track music generation with piano-roll
+  visualization and MIDI export).
 
 ## 1) Folder Structure
 
@@ -65,7 +69,20 @@ MusicLens/
   - Rule-based section timeline for "What's happening now?"
   - Best-effort lyrics extraction and dashboard lyrics panel
 
-4. Optional expansions
+4. AI Music Compositor (completed)
+  - `POST /compose` endpoint accepting a free-form prompt
+  - LangGraph-based prompt interpretation (genre / mood / mode / tempo /
+    key / bars), with a deterministic keyword-heuristic fallback when no
+    `OPENAI_API_KEY` is configured
+  - Procedural music engine (modal scales, diatonic chord progressions,
+    voice leading, genre-aware drum + bass patterns, song-level
+    intro/verse/chorus/bridge/outro structure)
+  - Multi-track output: melody, harmony, bass, drums (note-level JSON +
+    base64-encoded MIDI file)
+  - Frontend Compose tab with composition form, piano-roll visualizer,
+    AI narrative panel, and MIDI download
+
+5. Optional expansions
   - Instrument separation (backend)
   - Song comparison view
   - Multi-track Music DNA benchmarking
@@ -81,6 +98,11 @@ python -m venv .venv
 pip install -r requirements.txt
 # Optional: install lyrics transcription engine
 pip install -r requirements-lyrics.txt
+# Optional: install AI Music Compositor dependencies (music21 + LangGraph).
+# The /compose endpoint requires music21; the LangGraph path is only used
+# when OPENAI_API_KEY is set, otherwise the deterministic procedural
+# engine is used as a fallback.
+pip install -r requirements-composer.txt
 uvicorn app.main:app --reload
 ```
 
@@ -88,6 +110,7 @@ uvicorn app.main:app --reload
 
 - Health: GET http://127.0.0.1:8000/health
 - Analyze: POST http://127.0.0.1:8000/analyze (multipart/form-data, file field name: file)
+- Compose: POST http://127.0.0.1:8000/compose (application/json, body keys: `prompt`, optional `style`, `key`, `mode`, `tempo_bpm`, `bars`, `use_llm`)
 
 ## 4) Frontend Setup (Windows + VS Code)
 
