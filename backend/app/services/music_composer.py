@@ -105,6 +105,9 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
 
     Falls back to MIDI if synthesis fails.
     """
+    if tempo_bpm <= 0:
+        raise ValueError("tempo_bpm must be greater than 0")
+
     import io
     import tempfile
     import os
@@ -163,7 +166,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
 
                 ticks_per_beat = midi_file.ticks_per_beat
                 # Tempo in microseconds per beat.
-                tempo = int(60_000_000 / max(1, tempo_bpm))
+                tempo = int(60_000_000 / tempo_bpm)
                 ticks_per_second = (ticks_per_beat * 1_000_000) / tempo
                 duration_sec = max(2, total_ticks / ticks_per_second + 0.5)
 
