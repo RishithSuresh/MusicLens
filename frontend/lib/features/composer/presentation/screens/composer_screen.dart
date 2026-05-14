@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:audioplayers/audioplayers.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/composer_api_service.dart';
@@ -33,6 +33,7 @@ class _ComposerScreenState extends State<ComposerScreen>
   late Ticker _ticker;
   Duration _elapsed = Duration.zero;
   bool _playing = false;
+  bool _playbackInfoShown = false;
 
   @override
   void initState() {
@@ -60,9 +61,23 @@ class _ComposerScreenState extends State<ComposerScreen>
 
   void _togglePlay() {
     if (_composition == null) return;
-    
-    // Show info dialog about MIDI playback
-    _showMidiPlaybackInfo();
+    if (_playing) {
+      _ticker.stop();
+      setState(() => _playing = false);
+      return;
+    }
+
+    _ticker.start();
+    setState(() => _playing = true);
+
+    if (!_playbackInfoShown) {
+      _playbackInfoShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showMidiPlaybackInfo();
+        }
+      });
+    }
   }
 
   void _showMidiPlaybackInfo() {
@@ -158,6 +173,7 @@ class _ComposerScreenState extends State<ComposerScreen>
         _composition = result;
         _elapsed = Duration.zero;
         _playing = false;
+        _playbackInfoShown = false;
         _ticker.stop();
         _audioService.stop();
       });
@@ -173,21 +189,21 @@ class _ComposerScreenState extends State<ComposerScreen>
     if (c == null) return;
     try {
       final bytes = base64Decode(c.midiBase64);
-      final fileName = 'musiclens-composition-${c.compositionId.substring(0, 8)}.mp3';
+      final fileName = 'musiclens-composition-${c.compositionId.substring(0, 8)}.mid';
       final saved = await FilePicker.saveFile(
-        dialogTitle: 'Save MP3 file',
+        dialogTitle: 'Save MIDI file',
         fileName: fileName,
         type: FileType.custom,
-        allowedExtensions: ['mp3'],
+        allowedExtensions: ['mid', 'midi'],
         bytes: Uint8List.fromList(bytes),
       );
       if (!mounted) return;
-      final msg = saved == null ? 'Export cancelled' : 'MP3 exported to $saved';
+      final msg = saved == null ? 'Export cancelled' : 'MIDI exported to $saved';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to export MP3: $e')),
+        SnackBar(content: Text('Failed to export MIDI: $e')),
       );
     }
   }
@@ -195,72 +211,140 @@ class _ComposerScreenState extends State<ComposerScreen>
   @override
   Widget build(BuildContext context) {
     final composition = _composition;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-            ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 1040;
-              final form = CompositionForm(onSubmit: _compose, isLoading: _isLoading);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            const Color(0xFFF8FAFF).withValues(alpha: 0.6),
+            const Color(0xFFF5F3FF).withValues(alpha: 0.35),
+            Colors.transparent,
+          ],
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _headerCard(),
+            const SizedBox(height: 12),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 1040;
+                final form = CompositionForm(onSubmit: _compose, isLoading: _isLoading);
 
-              if (composition == null) {
-                return isWide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: form),
-                          const SizedBox(width: 16),
-                          Expanded(child: _emptyState()),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          form,
-                          const SizedBox(height: 16),
-                          _emptyState(),
-                        ],
-                      );
-              }
+                if (composition == null) {
+                  return isWide
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: form),
+                            const SizedBox(width: 16),
+                            Expanded(child: _emptyState()),
+                          ],
+                        )
+                      : Column(
+                          children: [
+                            form,
+                            const SizedBox(height: 16),
+                            _emptyState(),
+                          ],
+                        );
+                }
 
-              final results = Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _playbackBar(composition),
-                  const SizedBox(height: 12),
-                  PianoRoll(
-                    tracks: composition.tracks,
-                    totalBeats: composition.metadata.totalBeats,
-                    sections: composition.structure,
-                    currentBeat: _currentBeat,
-                  ),
-                  const SizedBox(height: 12),
-                  CompositionSummary(
-                    metadata: composition.metadata,
-                    narrative: composition.narrative,
-                    usedLlm: composition.usedLlm,
-                  ),
-                ],
-              );
-
-              if (isWide) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                final results = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(width: 420, child: form),
-                    const SizedBox(width: 16),
-                    Expanded(child: results),
+                    _playbackBar(composition),
+                    const SizedBox(height: 12),
+                    PianoRoll(
+                      tracks: composition.tracks,
+                      totalBeats: composition.metadata.totalBeats,
+                      sections: composition.structure,
+                      currentBeat: _currentBeat,
+                    ),
+                    const SizedBox(height: 12),
+                    CompositionSummary(
+                      metadata: composition.metadata,
+                      narrative: composition.narrative,
+                      usedLlm: composition.usedLlm,
+                    ),
                   ],
                 );
-              }
-              return Column(children: [form, const SizedBox(height: 16), results]);
-            },
+
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 420, child: form),
+                      const SizedBox(width: 16),
+                      Expanded(child: results),
+                    ],
+                  );
+                }
+                return Column(children: [form, const SizedBox(height: 16), results]);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _headerCard() {
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.white.withValues(alpha: 0.82),
+          const Color(0xFFF5F3FF).withValues(alpha: 0.62),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+              ),
+            ),
+            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI Music Composer Studio',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                      ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Generate, preview, and export rich MIDI ideas in seconds.',
+                  style: TextStyle(
+                    color: Color(0xFF475569),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

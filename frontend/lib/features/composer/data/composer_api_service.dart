@@ -26,8 +26,8 @@ class ComposerApiService {
       if (style != null && style.isNotEmpty) 'style': style,
       if (key != null && key.isNotEmpty) 'key': key,
       if (mode != null && mode.isNotEmpty) 'mode': mode,
-      'tempo_bpm': ?tempoBpm,
-      'bars': ?bars,
+      if (tempoBpm != null) 'tempo_bpm': tempoBpm,
+      if (bars != null) 'bars': bars,
     };
 
     final response = await http.post(
