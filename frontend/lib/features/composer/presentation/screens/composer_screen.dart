@@ -129,6 +129,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
         bars: bars,
         useLlm: useLlm,
       );
+      await _audioService.stop();
       bool isAudioPrepared = false;
       String? audioError;
       final mp3Base64 = result.mp3Base64;
@@ -364,13 +365,13 @@ class _ComposerScreenState extends State<ComposerScreen> {
                   ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'A multi-stage LangGraph pipeline interprets your prompt, '
-              'then a procedural music engine arranges melody, harmony, '
-              'bass, and drums into a downloadable MIDI piece.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF64748B), height: 1.5),
-            ),
+               const Text(
+                 'A multi-stage LangGraph pipeline interprets your prompt, '
+                 'then a procedural music engine arranges melody, harmony, '
+                 'bass, and drums into a MIDI piece with optional in-app MP3 preview.',
+                 textAlign: TextAlign.center,
+                 style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+               ),
           ],
         ),
       ),
