@@ -86,9 +86,6 @@ def compose(request: CompositionRequest) -> CompositionResponse:
     Optional dependencies (``music21`` and the LangGraph stack) must be
     installed for this endpoint; see ``backend/requirements-composer.txt``.
     """
-    import sys
-    print(f"DEBUG: sys.executable = {sys.executable}", file=sys.stderr)
-    print(f"DEBUG: sys.path = {sys.path}", file=sys.stderr)
     try:
         from app.services.music_composer import compose as run_compose
     except Exception as exc:  # noqa: BLE001
