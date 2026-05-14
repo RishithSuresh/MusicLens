@@ -6,7 +6,7 @@ MusicLens is a two-part system:
 - Flutter frontend (light-themed premium dashboard style) with two tabs:
   **Analyze** (interactive visual exploration of an uploaded track) and
   **Compose** (prompt-driven multi-track music generation with piano-roll
-  visualization and MIDI export).
+  visualization, in-app MP3 preview, and MIDI/MP3 export).
 
 ## 1) Folder Structure
 
@@ -78,9 +78,9 @@ MusicLens/
     voice leading, genre-aware drum + bass patterns, song-level
     intro/verse/chorus/bridge/outro structure)
   - Multi-track output: melody, harmony, bass, drums (note-level JSON +
-    base64-encoded MIDI file)
+    base64-encoded MIDI file + optional base64-encoded MP3 preview audio)
   - Frontend Compose tab with composition form, piano-roll visualizer,
-    AI narrative panel, and MIDI download
+    AI narrative panel, in-app audio playback, and MIDI/MP3 download
 
 5. Optional expansions
   - Instrument separation (backend)

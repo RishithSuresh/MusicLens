@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
@@ -52,6 +53,14 @@ class AudioPlaybackService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> loadBytes(Uint8List bytes, {String? mimeType}) async {
+    if (bytes.isEmpty) {
+      throw StateError('Cannot load audio from empty byte array.');
+    }
+    await _player.stop();
+    await _player.setSource(BytesSource(bytes, mimeType: mimeType));
   }
 
   Future<void> play() async {

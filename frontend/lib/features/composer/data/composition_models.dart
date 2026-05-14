@@ -133,6 +133,7 @@ class CompositionResponse {
     required this.narrative,
     required this.usedLlm,
     required this.midiBase64,
+    required this.mp3Base64,
   });
 
   final String compositionId;
@@ -142,6 +143,7 @@ class CompositionResponse {
   final String narrative;
   final bool usedLlm;
   final String midiBase64;
+  final String? mp3Base64;
 
   factory CompositionResponse.fromJson(Map<String, dynamic> json) {
     return CompositionResponse(
@@ -156,6 +158,7 @@ class CompositionResponse {
       narrative: json['narrative'].toString(),
       usedLlm: json['used_llm'] as bool? ?? false,
       midiBase64: json['midi_base64'].toString(),
+      mp3Base64: json['mp3_base64'] as String?,
     );
   }
 }
