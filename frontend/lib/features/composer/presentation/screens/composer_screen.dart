@@ -42,8 +42,8 @@ class _ComposerScreenState extends State<ComposerScreen> {
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _stateSub;
 
-  int _calculatePlaybackMs(double totalBeats, int tempoBpm) {
-    return (totalBeats / tempoBpm * _secondsPerMinute * _millisecondsPerSecond).round();
+  int _calculatePlaybackMs(double totalBeats, int tempo) {
+    return (totalBeats / tempo * _secondsPerMinute * _millisecondsPerSecond).round();
   }
 
   @override
@@ -56,8 +56,8 @@ class _ComposerScreenState extends State<ComposerScreen> {
         setState(() => _elapsed = position);
         return;
       }
-      final bounded = position.inMilliseconds.clamp(0, _maxPlaybackMs);
-      setState(() => _elapsed = Duration(milliseconds: bounded));
+      final clampedPositionMs = position.inMilliseconds.clamp(0, _maxPlaybackMs);
+      setState(() => _elapsed = Duration(milliseconds: clampedPositionMs));
     });
     _stateSub = _audioService.stateStream.listen((state) {
       if (!mounted) return;

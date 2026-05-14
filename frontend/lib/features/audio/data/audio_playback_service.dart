@@ -57,7 +57,7 @@ class AudioPlaybackService {
 
   Future<void> loadBytes(Uint8List bytes, {String? mimeType}) async {
     if (bytes.isEmpty) {
-      throw StateError('Cannot load audio: provided byte array is empty.');
+      throw StateError('Cannot load audio from empty byte array.');
     }
     await _player.stop();
     await _player.setSource(BytesSource(bytes, mimeType: mimeType));
