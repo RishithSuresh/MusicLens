@@ -23,10 +23,10 @@ class RandomPromptResponse {
 
   factory RandomPromptResponse.fromJson(Map<String, dynamic> json) {
     return RandomPromptResponse(
-      prompt: json['prompt'].toString(),
-      style: json['style'].toString(),
-      key: json['key'].toString(),
-      mode: json['mode'].toString(),
+      prompt: json['prompt'] as String,
+      style: json['style'] as String,
+      key: json['key'] as String,
+      mode: json['mode'] as String,
       tempoBpm: (json['tempo_bpm'] as num).toInt(),
       bars: (json['bars'] as num).toInt(),
     );
