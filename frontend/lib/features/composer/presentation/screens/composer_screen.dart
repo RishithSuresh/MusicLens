@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/composer_api_service.dart';
@@ -22,32 +23,46 @@ class ComposerScreen extends StatefulWidget {
   State<ComposerScreen> createState() => _ComposerScreenState();
 }
 
-class _ComposerScreenState extends State<ComposerScreen>
-    with SingleTickerProviderStateMixin {
+class _ComposerScreenState extends State<ComposerScreen> {
   final ComposerApiService _api = ComposerApiService();
   final AudioPlaybackService _audioService = AudioPlaybackService();
 
   CompositionResponse? _composition;
   bool _isLoading = false;
+  bool _isAudioPrepared = false;
   String? _error;
 
-  late Ticker _ticker;
   Duration _elapsed = Duration.zero;
   bool _playing = false;
-  bool _playbackInfoShown = false;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<PlayerState>? _stateSub;
 
   @override
   void initState() {
     super.initState();
-    _ticker = createTicker((elapsed) {
-      if (!mounted || !_playing) return;
-      setState(() => _elapsed = elapsed);
+    _positionSub = _audioService.positionStream.listen((position) {
+      if (!mounted) return;
+      final c = _composition;
+      if (c == null) {
+        setState(() => _elapsed = position);
+        return;
+      }
+      final maxMs = (c.metadata.totalBeats / c.metadata.tempoBpm * 60 * 1000).round();
+      final bounded = position.inMilliseconds.clamp(0, maxMs);
+      setState(() => _elapsed = Duration(milliseconds: bounded));
+    });
+    _stateSub = _audioService.stateStream.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _playing = state == PlayerState.playing;
+      });
     });
   }
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _positionSub?.cancel();
+    _stateSub?.cancel();
     _audioService.dispose();
     super.dispose();
   }
@@ -60,82 +75,27 @@ class _ComposerScreenState extends State<ComposerScreen>
     return beat.clamp(0.0, c.metadata.totalBeats);
   }
 
-  void _togglePlay() {
+  Future<void> _togglePlay() async {
     if (_composition == null) return;
-    if (_playing) {
-      _ticker.stop();
-      setState(() => _playing = false);
+    if (!_isAudioPrepared) {
+      setState(() => _error = 'MP3 preview is not available for this composition.');
       return;
     }
-
-    _ticker.start();
-    setState(() => _playing = true);
-
-    if (!_playbackInfoShown) {
-      _playbackInfoShown = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _showMidiPlaybackInfo();
-        }
-      });
+    try {
+      if (_playing) {
+        await _audioService.pause();
+        return;
+      }
+      await _audioService.play();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = 'Playback failed: $e');
     }
-  }
-
-  void _showMidiPlaybackInfo() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('How to Hear Your Composition'),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your composition is a MIDI file. To hear it:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 12),
-              Text('1. Click the MIDI button below to download'),
-              SizedBox(height: 8),
-              Text('2. Open the file in one of these:'),
-              SizedBox(height: 8),
-              Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• Online: virtualpiano.net'),
-                    Text('• DAW: FL Studio, Ableton, Logic Pro'),
-                    Text('• Free: GarageBand, MuseScore'),
-                    Text('• Desktop: Any MIDI synthesizer'),
-                  ],
-                ),
-              ),
-              SizedBox(height: 12),
-              Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Text(
-                  'The piano roll below animates with your composition.',
-                  style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12, color: Color(0xFF64748B)),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _resetPlayhead() async {
-    await _audioService.stop();
-    _ticker.stop();
+    await _audioService.pause();
+    await _audioService.seek(0);
     setState(() {
       _playing = false;
       _elapsed = Duration.zero;
@@ -169,14 +129,24 @@ class _ComposerScreenState extends State<ComposerScreen>
         bars: bars,
         useLlm: useLlm,
       );
-      
+      bool isAudioPrepared = false;
+      String? audioError;
+      final mp3Base64 = result.mp3Base64;
+      if (mp3Base64 != null && mp3Base64.isNotEmpty) {
+        try {
+          await _audioService.loadBytes(base64Decode(mp3Base64), mimeType: 'audio/mpeg');
+          isAudioPrepared = true;
+        } catch (e) {
+          audioError = 'MP3 preview unavailable: $e';
+        }
+      }
+
       setState(() {
         _composition = result;
         _elapsed = Duration.zero;
         _playing = false;
-        _playbackInfoShown = false;
-        _ticker.stop();
-        _audioService.stop();
+        _isAudioPrepared = isAudioPrepared;
+        _error = audioError;
       });
     } catch (e) {
       setState(() => _error = 'Compose failed: $e');
@@ -205,6 +175,31 @@ class _ComposerScreenState extends State<ComposerScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to export MIDI: $e')),
+      );
+    }
+  }
+
+  Future<void> _downloadMp3() async {
+    final c = _composition;
+    final mp3Base64 = c?.mp3Base64;
+    if (c == null || mp3Base64 == null || mp3Base64.isEmpty) return;
+    try {
+      final bytes = base64Decode(mp3Base64);
+      final fileName = 'musiclens-composition-${c.compositionId.substring(0, 8)}.mp3';
+      final saved = await FilePicker.saveFile(
+        dialogTitle: 'Save MP3 file',
+        fileName: fileName,
+        type: FileType.custom,
+        allowedExtensions: ['mp3'],
+        bytes: Uint8List.fromList(bytes),
+      );
+      if (!mounted) return;
+      final msg = saved == null ? 'Export cancelled' : 'MP3 exported to $saved';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export MP3: $e')),
       );
     }
   }
@@ -337,7 +332,7 @@ class _ComposerScreenState extends State<ComposerScreen>
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  'Generate, preview, and export rich MIDI ideas in seconds.',
+                  'Generate, preview, and export MIDI + MP3 ideas in seconds.',
                   style: TextStyle(
                     color: Color(0xFF475569),
                     fontSize: 12,
@@ -393,9 +388,11 @@ class _ComposerScreenState extends State<ComposerScreen>
           Row(
             children: [
               Tooltip(
-                message: 'Play visual animation of the piano roll (download MIDI to hear audio)',
+                message: _isAudioPrepared
+                    ? 'Play generated MP3 preview'
+                    : 'MP3 preview unavailable for this composition',
                 child: IconButton(
-                  onPressed: () => _togglePlay(),
+                  onPressed: _isAudioPrepared ? () => _togglePlay() : null,
                   icon: Icon(_playing ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded),
                   color: const Color(0xFF3B82F6),
                   iconSize: 36,
@@ -406,12 +403,6 @@ class _ComposerScreenState extends State<ComposerScreen>
                 icon: const Icon(Icons.replay_rounded),
                 color: const Color(0xFF475569),
                 tooltip: 'Reset playhead',
-              ),
-              IconButton(
-                onPressed: _showMidiPlaybackInfo,
-                icon: const Icon(Icons.info_outline_rounded),
-                color: const Color(0xFF8B5CF6),
-                tooltip: 'How to hear the audio',
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -436,6 +427,15 @@ class _ComposerScreenState extends State<ComposerScreen>
                 ),
               ),
               const SizedBox(width: 12),
+              if (c.mp3Base64 != null && c.mp3Base64!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilledButton.icon(
+                    onPressed: _downloadMp3,
+                    icon: const Icon(Icons.graphic_eq_rounded, size: 18),
+                    label: const Text('MP3'),
+                  ),
+                ),
               FilledButton.icon(
                 onPressed: _downloadMidi,
                 icon: const Icon(Icons.download_rounded, size: 18),
@@ -451,18 +451,20 @@ class _ComposerScreenState extends State<ComposerScreen>
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.2)),
             ),
-            child: const Row(
-              children: [
-                Icon(Icons.info_rounded, size: 16, color: Color(0xFF8B5CF6)),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Piano roll animates visually. Download MIDI and open in a synthesizer or DAW to hear audio.',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                  ),
-                ),
-              ],
-            ),
+             child: Row(
+               children: [
+                 const Icon(Icons.info_rounded, size: 16, color: Color(0xFF8B5CF6)),
+                 const SizedBox(width: 8),
+                 Expanded(
+                   child: Text(
+                     _isAudioPrepared
+                         ? 'Playing synthesized MP3 preview in-app. Export MIDI for DAWs and MIDI editors.'
+                         : 'MP3 preview unavailable from backend synthesis. You can still export MIDI.',
+                     style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                   ),
+                 ),
+               ],
+             ),
           ),
         ],
       ),

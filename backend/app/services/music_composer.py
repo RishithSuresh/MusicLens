@@ -100,10 +100,10 @@ def _render_midi(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) ->
     return midi_file.writestr()
 
 
-def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) -> bytes:
+def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) -> bytes | None:
     """Render the in-memory tracks to MP3 audio using music21's export capabilities.
 
-    Falls back to MIDI if synthesis fails.
+    Returns ``None`` if MP3 synthesis fails.
     """
     if tempo_bpm <= 0:
         raise ValueError(f"tempo_bpm must be greater than 0, got {tempo_bpm}")
@@ -112,14 +112,13 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
     import tempfile
     import os
 
-    # Generate MIDI bytes first
-    midi_bytes = _render_midi(tracks, tempo_bpm, beats_per_bar)
-
     try:
         from pydub import AudioSegment
     except ImportError as e:
-        print(f"Warning: pydub not available ({e}). Returning MIDI format instead of MP3.")
-        return midi_bytes
+        print(f"Warning: pydub not available ({e}). MP3 export disabled.")
+        return None
+
+    midi_bytes = _render_midi(tracks, tempo_bpm, beats_per_bar)
 
     try:
         # Write MIDI to temporary file
@@ -225,10 +224,10 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                 wavfile.write(wav_path, sample_rate, audio_int)
 
             except ImportError:
-                print("Warning: mido not available for MIDI parsing. Returning MIDI format instead.")
+                print("Warning: mido not available for MIDI parsing. MP3 export skipped.")
                 if os.path.exists(midi_path):
                     os.remove(midi_path)
-                return midi_bytes
+                return None
 
         # Load WAV and convert to MP3
         try:
@@ -252,7 +251,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                 raise ValueError("Generated MP3 data too small")
 
         except Exception as e:
-            print(f"Warning: Failed to encode MP3 ({e}). Returning MIDI format instead.")
+            print(f"Warning: Failed to encode MP3 ({e}).")
             # Cleanup
             if os.path.exists(midi_path):
                 os.remove(midi_path)
@@ -260,11 +259,11 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                 os.remove(wav_path)
             if os.path.exists(mp3_path):
                 os.remove(mp3_path)
-            return midi_bytes
+            return None
 
     except Exception as e:
-        print(f"Error in MIDI to MP3 conversion: {e}. Returning MIDI format instead.")
-        return midi_bytes
+        print(f"Error in MIDI to MP3 conversion: {e}.")
+        return None
 
 
 def compose(request: CompositionRequest) -> CompositionResponse:
@@ -299,7 +298,8 @@ def compose(request: CompositionRequest) -> CompositionResponse:
     )
 
     tracks, sections, progression = compose_procedural(plan)
-    audio_bytes = _render_to_mp3(tracks, plan.tempo_bpm, plan.beats_per_bar)
+    midi_bytes = _render_midi(tracks, plan.tempo_bpm, plan.beats_per_bar)
+    mp3_bytes = _render_to_mp3(tracks, plan.tempo_bpm, plan.beats_per_bar)
     narrative = write_narrative(request.prompt, interp, progression)
 
     metadata = CompositionMetadata(
@@ -323,5 +323,6 @@ def compose(request: CompositionRequest) -> CompositionResponse:
         tracks=[_to_response_track(t) for t in tracks],
         narrative=narrative,
         used_llm=interp.used_llm,
-        midi_base64=base64.b64encode(audio_bytes).decode("ascii"),
+        midi_base64=base64.b64encode(midi_bytes).decode("ascii"),
+        mp3_base64=base64.b64encode(mp3_bytes).decode("ascii") if mp3_bytes else None,
     )

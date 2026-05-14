@@ -97,3 +97,7 @@ class CompositionResponse(BaseModel):
     narrative: str
     used_llm: bool
     midi_base64: str = Field(..., description="Base64-encoded MIDI file bytes")
+    mp3_base64: str | None = Field(
+        default=None,
+        description="Base64-encoded MP3 audio bytes synthesized from the composition",
+    )
