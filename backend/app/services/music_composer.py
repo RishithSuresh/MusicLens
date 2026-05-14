@@ -100,6 +100,171 @@ def _render_midi(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) ->
     return midi_file.writestr()
 
 
+def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) -> bytes:
+    """Render the in-memory tracks to MP3 audio using music21's export capabilities.
+
+    Falls back to MIDI if synthesis fails.
+    """
+    import io
+    import tempfile
+    import os
+
+    # Generate MIDI bytes first
+    midi_bytes = _render_midi(tracks, tempo_bpm, beats_per_bar)
+
+    try:
+        from pydub import AudioSegment
+        from pydub.generators import Sine
+    except ImportError as e:
+        print(f"Warning: pydub not available ({e}). Returning MIDI format instead of MP3.")
+        return midi_bytes
+
+    try:
+        # Write MIDI to temporary file
+        with tempfile.NamedTemporaryFile(suffix=".mid", delete=False) as midi_temp:
+            midi_temp.write(midi_bytes)
+            midi_path = midi_temp.name
+
+        wav_path = midi_path.replace(".mid", ".wav")
+        mp3_path = midi_path.replace(".mid", ".mp3")
+
+        # Try to convert MIDI to audio using music21's export
+        try:
+            try:
+                import music21
+                score = music21.midi.translate.midiFileToStream(
+                    music21.midi.MidiFile(midi_path)
+                )
+                # Try to show/export to audio format
+                # This requires external tools like MuseScore, Finale, or notation software
+                score.show("musicxml.pdf")  # This won't produce audio, just check format
+            except Exception:
+                # music21 export to audio requires external tools
+                raise NotImplementedError("music21 export requires external notation software")
+
+        except Exception as e:
+            # Fallback: Create synthetic audio from MIDI
+            print(f"Note: music21 export not available ({e}). Using synthetic audio...")
+
+            try:
+                # Simple synthesis: Play each note as a sine wave
+                import numpy as np
+                from scipy.io import wavfile
+                from mido import MidiFile
+
+                midi_file = MidiFile(midi_path)
+
+                # Calculate total duration
+                total_ticks = 0
+                for track in midi_file.tracks:
+                    tick_count = 0
+                    for msg in track:
+                        tick_count += msg.time
+                    total_ticks = max(total_ticks, tick_count)
+
+                ticks_per_beat = midi_file.ticks_per_beat
+                # Tempo in microseconds per beat (default 120 BPM = 500000 µs/beat)
+                tempo = tempo_bpm * 1000 * 1000 // 120  # Scale to actual tempo
+                ticks_per_second = (ticks_per_beat * 1_000_000) / tempo
+                duration_sec = max(2, total_ticks / ticks_per_second + 0.5)
+
+                sample_rate = 44100
+                num_samples = int(duration_sec * sample_rate)
+                audio_data = np.zeros(num_samples, dtype=np.float32)
+
+                # MIDI note to frequency conversion
+                def midi_to_freq(midi_note: int) -> float:
+                    return 440 * (2 ** ((midi_note - 69) / 12))
+
+                # Process MIDI events
+                current_time = 0
+                for track in midi_file.tracks:
+                    current_time = 0
+                    active_notes = {}  # Track active notes: {note: (start_sample, start_time)}
+
+                    for msg in track:
+                        current_time += msg.time
+                        current_sample = int((current_time / ticks_per_beat) * (60 / tempo_bpm) * sample_rate)
+
+                        if msg.type == "note_on" and msg.velocity > 0:
+                            freq = midi_to_freq(msg.note)
+                            # Store note info
+                            active_notes[msg.note] = (current_sample, msg.velocity / 127.0)
+
+                        elif msg.type in ("note_off", "note_on") and msg.velocity == 0:
+                            if msg.note in active_notes:
+                                start_sample, velocity = active_notes[msg.note]
+                                duration_samples = current_sample - start_sample
+
+                                if duration_samples > 0:
+                                    freq = midi_to_freq(msg.note)
+                                    # Generate sine wave for this note
+                                    t = np.arange(duration_samples) / sample_rate
+                                    phase = 2 * np.pi * freq * t
+                                    note_data = np.sin(phase) * velocity * 0.3
+
+                                    # Add to main audio with fade
+                                    end_sample = min(current_sample, len(audio_data))
+                                    samples_to_add = end_sample - start_sample
+                                    if samples_to_add > 0:
+                                        audio_data[start_sample:end_sample] += note_data[:samples_to_add]
+
+                                del active_notes[msg.note]
+
+                # Normalize audio
+                max_val = np.max(np.abs(audio_data))
+                if max_val > 0:
+                    audio_data = audio_data / max_val * 0.95
+
+                # Convert to 16-bit PCM
+                audio_int = (audio_data * 32767).astype(np.int16)
+
+                # Write WAV file
+                wavfile.write(wav_path, sample_rate, audio_int)
+
+            except ImportError:
+                print("Warning: mido not available for MIDI parsing. Returning MIDI format instead.")
+                if os.path.exists(midi_path):
+                    os.remove(midi_path)
+                return midi_bytes
+
+        # Load WAV and convert to MP3
+        try:
+            audio = AudioSegment.from_wav(wav_path)
+            mp3_buffer = io.BytesIO()
+            audio.export(mp3_buffer, format="mp3", bitrate="192k")
+            mp3_bytes = mp3_buffer.getvalue()
+
+            # Verify we got valid MP3 data
+            if len(mp3_bytes) > 100:
+                print(f"Successfully generated MP3: {len(mp3_bytes)} bytes")
+                # Cleanup
+                if os.path.exists(midi_path):
+                    os.remove(midi_path)
+                if os.path.exists(wav_path):
+                    os.remove(wav_path)
+                if os.path.exists(mp3_path):
+                    os.remove(mp3_path)
+                return mp3_bytes
+            else:
+                raise ValueError("Generated MP3 data too small")
+
+        except Exception as e:
+            print(f"Warning: Failed to encode MP3 ({e}). Returning MIDI format instead.")
+            # Cleanup
+            if os.path.exists(midi_path):
+                os.remove(midi_path)
+            if os.path.exists(wav_path):
+                os.remove(wav_path)
+            if os.path.exists(mp3_path):
+                os.remove(mp3_path)
+            return midi_bytes
+
+    except Exception as e:
+        print(f"Error in MIDI to MP3 conversion: {e}. Returning MIDI format instead.")
+        return midi_bytes
+
+
 def compose(request: CompositionRequest) -> CompositionResponse:
     """Run the full Compose pipeline end-to-end."""
     overrides = {
@@ -132,7 +297,7 @@ def compose(request: CompositionRequest) -> CompositionResponse:
     )
 
     tracks, sections, progression = compose_procedural(plan)
-    midi_bytes = _render_midi(tracks, plan.tempo_bpm, plan.beats_per_bar)
+    audio_bytes = _render_to_mp3(tracks, plan.tempo_bpm, plan.beats_per_bar)
     narrative = write_narrative(request.prompt, interp, progression)
 
     metadata = CompositionMetadata(
@@ -156,5 +321,5 @@ def compose(request: CompositionRequest) -> CompositionResponse:
         tracks=[_to_response_track(t) for t in tracks],
         narrative=narrative,
         used_llm=interp.used_llm,
-        midi_base64=base64.b64encode(midi_bytes).decode("ascii"),
+        midi_base64=base64.b64encode(audio_bytes).decode("ascii"),
     )

@@ -499,15 +499,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _togglePlayback() {
     if (_analysis == null || !_isAudioPrepared) {
+      setState(() => _error = 'Audio not ready. Select and analyze a file first.');
       return;
     }
 
     if (_isPlaying) {
-      _playbackService.pause();
+      _playbackService.pause().catchError((e) {
+        setState(() => _error = 'Pause failed: $e');
+      });
       return;
     }
 
-    _playbackService.play();
+    _playbackService.play().catchError((e) {
+      setState(() => _error = 'Playback failed: $e');
+    });
   }
 
   void _onSeek(double seconds) {

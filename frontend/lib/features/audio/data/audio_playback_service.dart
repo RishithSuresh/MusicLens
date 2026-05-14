@@ -4,7 +4,20 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 
 class AudioPlaybackService {
+  final AudioPlayer _player = AudioPlayer();
+
+  late final StreamSubscription<Duration> _positionSub;
+  late final StreamSubscription<PlayerState> _stateSub;
+  late final StreamSubscription<void> _completeSub;
+
+  final StreamController<Duration> _positionController = StreamController.broadcast();
+  final StreamController<PlayerState> _stateController = StreamController.broadcast();
+
   AudioPlaybackService() {
+    // Initialize audio player with proper settings for web
+    _player.setReleaseMode(ReleaseMode.stop);
+    _player.setVolume(1.0);
+
     _positionSub = _player.onPositionChanged.listen((duration) {
       _positionController.add(duration);
     });
@@ -18,40 +31,43 @@ class AudioPlaybackService {
     });
   }
 
-  final AudioPlayer _player = AudioPlayer();
-
-  late final StreamSubscription<Duration> _positionSub;
-  late final StreamSubscription<PlayerState> _stateSub;
-  late final StreamSubscription<void> _completeSub;
-
-  final StreamController<Duration> _positionController = StreamController.broadcast();
-  final StreamController<PlayerState> _stateController = StreamController.broadcast();
-
   Stream<Duration> get positionStream => _positionController.stream;
   Stream<PlayerState> get stateStream => _stateController.stream;
 
   Future<void> loadFile(PlatformFile file) async {
-    await _player.stop();
+    try {
+      await _player.stop();
 
-    if (file.bytes != null && file.bytes!.isNotEmpty) {
-      await _player.setSource(BytesSource(file.bytes!));
-      return;
+      if (file.bytes != null && file.bytes!.isNotEmpty) {
+        await _player.setSource(BytesSource(file.bytes!));
+        return;
+      }
+
+      if (file.path != null && file.path!.isNotEmpty) {
+        await _player.setSource(DeviceFileSource(file.path!));
+        return;
+      }
+
+      throw StateError('Audio file is not readable on this platform.');
+    } catch (e) {
+      rethrow;
     }
-
-    if (file.path != null && file.path!.isNotEmpty) {
-      await _player.setSource(DeviceFileSource(file.path!));
-      return;
-    }
-
-    throw StateError('Audio file is not readable on this platform.');
   }
 
   Future<void> play() async {
-    await _player.resume();
+    try {
+      await _player.resume();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> pause() async {
-    await _player.pause();
+    try {
+      await _player.pause();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<void> seek(double seconds) async {
