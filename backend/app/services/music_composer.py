@@ -27,6 +27,8 @@ from app.services.procedural_composer import (
     compose_procedural,
 )
 
+MIN_MP3_SIZE_BYTES = 100
+
 
 def _to_response_track(track: TrackData) -> CompositionTrack:
     return CompositionTrack(
@@ -237,7 +239,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
             mp3_bytes = mp3_buffer.getvalue()
 
             # Verify we got valid MP3 data
-            if len(mp3_bytes) > 100:
+            if len(mp3_bytes) > MIN_MP3_SIZE_BYTES:
                 print(f"Successfully generated MP3: {len(mp3_bytes)} bytes")
                 # Cleanup
                 if os.path.exists(midi_path):
@@ -249,7 +251,8 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                 return mp3_bytes
             else:
                 raise ValueError(
-                    f"Generated MP3 data too small: {len(mp3_bytes)} bytes (minimum: 100)"
+                    "Generated MP3 data too small: "
+                    f"{len(mp3_bytes)} bytes (minimum: {MIN_MP3_SIZE_BYTES})"
                 )
 
         except Exception as e:

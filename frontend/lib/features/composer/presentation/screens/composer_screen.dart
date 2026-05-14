@@ -24,7 +24,9 @@ class ComposerScreen extends StatefulWidget {
 }
 
 class _ComposerScreenState extends State<ComposerScreen> {
-  static const int _compositionIdPrefixLength = 8;
+  static const int _idPrefixLength = 8;
+  static const int _secondsPerMinute = 60;
+  static const int _millisecondsPerSecond = 1000;
 
   final ComposerApiService _api = ComposerApiService();
   final AudioPlaybackService _audioService = AudioPlaybackService();
@@ -39,6 +41,10 @@ class _ComposerScreenState extends State<ComposerScreen> {
   int _maxPlaybackMs = 0;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<PlayerState>? _stateSub;
+
+  int _calculatePlaybackMs(double totalBeats, int tempoBpm) {
+    return (totalBeats / tempoBpm * _secondsPerMinute * _millisecondsPerSecond).round();
+  }
 
   @override
   void initState() {
@@ -149,7 +155,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
         _elapsed = Duration.zero;
         _playing = false;
         _isAudioPrepared = isAudioPrepared;
-        _maxPlaybackMs = (result.metadata.totalBeats / result.metadata.tempoBpm * 60 * 1000).round();
+        _maxPlaybackMs = _calculatePlaybackMs(result.metadata.totalBeats, result.metadata.tempoBpm);
         _error = audioError;
       });
     } catch (e) {
@@ -164,7 +170,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
     if (c == null) return;
     try {
       final bytes = base64Decode(c.midiBase64);
-      final fileName = 'musiclens-composition-${c.compositionId.substring(0, _compositionIdPrefixLength)}.mid';
+      final fileName = 'musiclens-composition-${c.compositionId.substring(0, _idPrefixLength)}.mid';
       final saved = await FilePicker.saveFile(
         dialogTitle: 'Save MIDI file',
         fileName: fileName,
@@ -189,7 +195,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
     if (c == null || mp3Base64 == null || mp3Base64.isEmpty) return;
     try {
       final bytes = base64Decode(mp3Base64);
-      final fileName = 'musiclens-composition-${c.compositionId.substring(0, _compositionIdPrefixLength)}.mp3';
+      final fileName = 'musiclens-composition-${c.compositionId.substring(0, _idPrefixLength)}.mp3';
       final saved = await FilePicker.saveFile(
         dialogTitle: 'Save MP3 file',
         fileName: fileName,
