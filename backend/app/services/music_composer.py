@@ -106,7 +106,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
     Falls back to MIDI if synthesis fails.
     """
     if tempo_bpm <= 0:
-        raise ValueError("tempo_bpm must be greater than 0")
+        raise ValueError(f"tempo_bpm must be greater than 0, got {tempo_bpm}")
 
     import io
     import tempfile

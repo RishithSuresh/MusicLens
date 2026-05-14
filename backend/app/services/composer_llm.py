@@ -59,7 +59,10 @@ class InterpretedPrompt:
 
 
 def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:
-    """Safely parse ``value`` as int and clamp to [minimum, maximum]."""
+    """Safely parse ``value`` as int and clamp to [minimum, maximum].
+
+    Returns ``default`` when parsing fails.
+    """
     try:
         parsed = int(value)
     except (TypeError, ValueError):
