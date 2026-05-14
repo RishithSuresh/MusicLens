@@ -58,6 +58,18 @@ class InterpretedPrompt:
     used_llm: bool
 
 
+def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:
+    """Safely parse ``value`` as int and clamp to [minimum, maximum].
+
+    Returns ``default`` when parsing fails.
+    """
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(minimum, min(maximum, parsed))
+
+
 def _heuristic_interpret(prompt: str, overrides: dict) -> InterpretedPrompt:
     text = prompt.lower()
     genre = next((g for g, kws in GENRE_KEYWORDS.items() if any(k in text for k in kws)), "pop")
@@ -127,10 +139,20 @@ def _llm_interpret(prompt: str, overrides: dict) -> InterpretedPrompt | None:
             genre=str(data.get("genre", "pop")),
             mood=str(data.get("mood", "joyful")),
             mode=overrides.get("mode") or str(data.get("mode", "major")),
-            tempo_bpm=int(overrides.get("tempo_bpm") or data.get("tempo_bpm", 110)),
+            tempo_bpm=_bounded_int(
+                overrides.get("tempo_bpm") or data.get("tempo_bpm", 110),
+                default=110,
+                minimum=40,
+                maximum=220,
+            ),
             key=overrides.get("key") or str(data.get("key", "C")),
             style=overrides.get("style") or str(data.get("style", "modern")),
-            bars=int(overrides.get("bars") or data.get("bars", 16)),
+            bars=_bounded_int(
+                overrides.get("bars") or data.get("bars", 16),
+                default=16,
+                minimum=4,
+                maximum=64,
+            ),
             used_llm=True,
         )
     except Exception:  # noqa: BLE001

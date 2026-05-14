@@ -105,6 +105,9 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
 
     Falls back to MIDI if synthesis fails.
     """
+    if tempo_bpm <= 0:
+        raise ValueError(f"tempo_bpm must be greater than 0, got {tempo_bpm}")
+
     import io
     import tempfile
     import os
@@ -114,7 +117,6 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
 
     try:
         from pydub import AudioSegment
-        from pydub.generators import Sine
     except ImportError as e:
         print(f"Warning: pydub not available ({e}). Returning MIDI format instead of MP3.")
         return midi_bytes
@@ -163,8 +165,8 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                     total_ticks = max(total_ticks, tick_count)
 
                 ticks_per_beat = midi_file.ticks_per_beat
-                # Tempo in microseconds per beat (default 120 BPM = 500000 µs/beat)
-                tempo = tempo_bpm * 1000 * 1000 // 120  # Scale to actual tempo
+                # Tempo in microseconds per beat.
+                tempo = int(60_000_000 / tempo_bpm)
                 ticks_per_second = (ticks_per_beat * 1_000_000) / tempo
                 duration_sec = max(2, total_ticks / ticks_per_second + 0.5)
 
@@ -191,7 +193,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                             # Store note info
                             active_notes[msg.note] = (current_sample, msg.velocity / 127.0)
 
-                        elif msg.type in ("note_off", "note_on") and msg.velocity == 0:
+                        elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                             if msg.note in active_notes:
                                 start_sample, velocity = active_notes[msg.note]
                                 duration_samples = current_sample - start_sample
