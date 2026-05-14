@@ -87,6 +87,17 @@ class CompositionMetadata(BaseModel):
     instruments: list[str]
 
 
+class RandomPromptResponse(BaseModel):
+    """A fully-populated set of composition parameters generated at random."""
+
+    prompt: str
+    style: str
+    key: str
+    mode: str
+    tempo_bpm: int
+    bars: int
+
+
 class CompositionResponse(BaseModel):
     """Full composition payload returned to the client."""
 

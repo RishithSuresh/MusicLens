@@ -44,4 +44,17 @@ class ComposerApiService {
       jsonDecode(response.body) as Map<String, dynamic>,
     );
   }
+
+  Future<RandomPromptResponse> fetchRandomPrompt() async {
+    final uri = Uri.parse('$baseUrl/random-prompt');
+    final response = await http.get(uri);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError('API error ${response.statusCode}: ${response.body}');
+    }
+
+    return RandomPromptResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
 }

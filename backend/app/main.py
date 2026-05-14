@@ -1,4 +1,5 @@
 import hashlib
+import random
 from collections import OrderedDict
 from threading import Lock
 
@@ -6,7 +7,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.analysis import AnalysisResponse
-from app.models.composition import CompositionRequest, CompositionResponse
+from app.models.composition import CompositionRequest, CompositionResponse, RandomPromptResponse
 from app.services.audio_analysis import analyze_audio_bytes
 
 app = FastAPI(title="MusicLens API", version="0.1.0")
@@ -29,6 +30,49 @@ app.add_middleware(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+_RANDOM_PROMPTS = [
+    "A hopeful uplifting lo-fi piano piece for a sunny morning",
+    "An intense cinematic orchestral theme for an epic battle scene",
+    "A melancholic jazz ballad for a rainy evening in the city",
+    "A playful pop tune with bright guitars and catchy hooks",
+    "A mysterious ambient soundscape evoking deep space exploration",
+    "An energetic rock track with driving drums and electric guitar",
+    "A tender folk ballad with acoustic guitar and gentle vocals",
+    "A funky blues groove with expressive guitar and brass stabs",
+    "A dreamy shoegaze piece with lush reverb and layered guitars",
+    "A mellow bossa nova with warm guitar and subtle percussion",
+    "A dramatic classical piano sonata with sweeping dynamics",
+    "An upbeat electronic dance track with pulsing synths",
+    "A serene meditation piece with soft pads and gentle arpeggios",
+    "A gritty garage rock song with raw energy and distorted guitars",
+    "A lush cinematic string arrangement for a heartfelt scene",
+    "A nostalgic 80s synth-pop track with punchy drums and lead synths",
+    "A hypnotic minimalist piano piece with repeating motifs",
+    "A vibrant Latin jazz fusion with piano montunos and brass",
+    "A haunting minor-key folk song with sparse arrangement",
+    "A triumphant marching band fanfare full of brass and percussion",
+]
+
+_RANDOM_STYLES = ["pop", "rock", "jazz", "blues", "lofi", "cinematic", "classical", "electronic", "folk", "ambient"]
+_RANDOM_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"]
+_RANDOM_MODES = ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "harmonic_minor"]
+_RANDOM_TEMPOS = list(range(50, 181, 5))
+_RANDOM_BARS = [8, 12, 16, 20, 24, 32]
+
+
+@app.get("/random-prompt", response_model=RandomPromptResponse)
+def random_prompt() -> RandomPromptResponse:
+    """Return a randomly generated set of music composition parameters."""
+    return RandomPromptResponse(
+        prompt=random.choice(_RANDOM_PROMPTS),
+        style=random.choice(_RANDOM_STYLES),
+        key=random.choice(_RANDOM_KEYS),
+        mode=random.choice(_RANDOM_MODES),
+        tempo_bpm=random.choice(_RANDOM_TEMPOS),
+        bars=random.choice(_RANDOM_BARS),
+    )
 
 
 def _hash_audio_bytes(audio_bytes: bytes) -> str:

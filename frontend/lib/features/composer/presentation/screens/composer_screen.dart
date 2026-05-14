@@ -244,7 +244,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
             LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth > 1040;
-                final form = CompositionForm(onSubmit: _compose, isLoading: _isLoading);
+                final form = CompositionForm(onSubmit: _compose, isLoading: _isLoading, apiService: _api);
 
                 if (composition == null) {
                   return isWide

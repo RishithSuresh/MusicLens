@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/glass_card.dart';
+import '../../data/composer_api_service.dart';
+import '../../data/composition_models.dart';
 
 /// User input form for the AI Music Compositor.
 class CompositionForm extends StatefulWidget {
   const CompositionForm({
     required this.onSubmit,
     required this.isLoading,
+    ComposerApiService? apiService,
     super.key,
-  });
+  }) : _apiService = apiService;
 
   final void Function({
     required String prompt,
@@ -21,12 +24,14 @@ class CompositionForm extends StatefulWidget {
   }) onSubmit;
 
   final bool isLoading;
+  final ComposerApiService? _apiService;
 
   @override
   State<CompositionForm> createState() => _CompositionFormState();
 }
 
 class _CompositionFormState extends State<CompositionForm> {
+  late final ComposerApiService _api = widget._apiService ?? ComposerApiService();
   final TextEditingController _promptCtrl = TextEditingController(
     text: 'A hopeful uplifting lo-fi piano piece for a sunny morning',
   );
@@ -36,6 +41,7 @@ class _CompositionFormState extends State<CompositionForm> {
   double _tempo = 110;
   double _bars = 16;
   bool _useLlm = true;
+  bool _isRandomizing = false;
 
   static const List<String> _styles = [
     'auto', 'pop', 'rock', 'jazz', 'blues', 'lofi', 'cinematic',
@@ -53,6 +59,29 @@ class _CompositionFormState extends State<CompositionForm> {
   void dispose() {
     _promptCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _randomize() async {
+    setState(() => _isRandomizing = true);
+    try {
+      final rp = await _api.fetchRandomPrompt();
+      if (!mounted) return;
+      setState(() {
+        _promptCtrl.text = rp.prompt;
+        _style = _styles.contains(rp.style) ? rp.style : 'auto';
+        _key = _keys.contains(rp.key) ? rp.key : 'auto';
+        _mode = _modes.contains(rp.mode) ? rp.mode : 'auto';
+        _tempo = rp.tempoBpm.toDouble().clamp(50, 180);
+        _bars = rp.bars.toDouble().clamp(8, 32);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not fetch random prompt. Please try again.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isRandomizing = false);
+    }
   }
 
   void _submit() {
@@ -90,9 +119,23 @@ class _CompositionFormState extends State<CompositionForm> {
             controller: _promptCtrl,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Describe the music you want…',
-              prefixIcon: Icon(Icons.edit_note_rounded),
+              prefixIcon: const Icon(Icons.edit_note_rounded),
+              suffixIcon: Tooltip(
+                message: 'Fill with a random prompt and settings',
+                child: IconButton(
+                  onPressed: (_isRandomizing || widget.isLoading) ? null : _randomize,
+                  icon: _isRandomizing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.casino_rounded),
+                  color: const Color(0xFF8B5CF6),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 14),
