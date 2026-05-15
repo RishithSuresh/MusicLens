@@ -1,12 +1,14 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../core/config/app_config.dart';
 import 'analysis_models.dart';
 
 class AudioApiService {
-  AudioApiService({this.baseUrl = 'http://127.0.0.1:8000'});
+  AudioApiService({this.baseUrl = AppConfig.apiBaseUrl});
 
   final String baseUrl;
 
@@ -28,13 +30,33 @@ class AudioApiService {
       throw StateError('Selected file has no readable bytes or path.');
     }
 
-    final streamed = await request.send();
+    late final http.StreamedResponse streamed;
+    try {
+      streamed = await request.send().timeout(const Duration(seconds: 45));
+    } on TimeoutException {
+      throw StateError('Request timed out. Please try again.');
+    } on http.ClientException {
+      throw StateError('Unable to reach the MusicLens API. Check backend URL/connectivity.');
+    }
     final body = await streamed.stream.bytesToString();
 
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
-      throw StateError('API error ${streamed.statusCode}: $body');
+      throw StateError(_buildApiError(streamed.statusCode, body));
     }
 
     return AudioAnalysisResponse.fromJson(jsonDecode(body) as Map<String, dynamic>);
+  }
+
+  String _buildApiError(int statusCode, String body) {
+    switch (statusCode) {
+      case 400:
+        return 'Invalid request: $body';
+      case 413:
+        return 'File is too large for analysis.';
+      case 503:
+        return 'Analysis service dependencies are not available on the server.';
+      default:
+        return 'API error $statusCode: $body';
+    }
   }
 }

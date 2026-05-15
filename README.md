@@ -116,6 +116,7 @@ uvicorn app.main:app --reload
 ### API Endpoint
 
 - Health: GET http://127.0.0.1:8000/health
+- Readiness: GET http://127.0.0.1:8000/ready
 - Analyze: POST http://127.0.0.1:8000/analyze (multipart/form-data, file field name: file)
 - Compose: POST http://127.0.0.1:8000/compose (application/json, body keys: `prompt`, optional `style`, `key`, `mode`, `tempo_bpm`, `bars`, `use_llm`)
 
@@ -126,7 +127,7 @@ uvicorn app.main:app --reload
 ```powershell
 cd frontend
 flutter pub get
-flutter run -d chrome
+flutter run -d chrome --dart-define=MUSICLENS_API_BASE_URL=http://127.0.0.1:8000
 ```
 
 If running desktop:
@@ -136,10 +137,39 @@ flutter run -d windows
 ```
 
 The frontend expects backend at:
-- http://127.0.0.1:8000
+- `MUSICLENS_API_BASE_URL` dart define (defaults to `http://127.0.0.1:8000`)
 
-You can change this in:
-- lib/features/audio/data/audio_api_service.dart
+Example production web build:
+
+```powershell
+flutter build web --release --dart-define=MUSICLENS_API_BASE_URL=https://your-api.example.com
+```
+
+## 8) Deployment Notes
+
+### Backend runtime env vars
+
+Create `.env` from `backend/.env.example` and tune:
+- `MUSICLENS_ENV` (`development` or `production`)
+- `MUSICLENS_CORS_ORIGINS` (comma-separated allowed origins)
+- `MUSICLENS_MAX_UPLOAD_BYTES` (default 20 MB)
+- `MUSICLENS_MAX_PROMPT_CHARS` (default 500)
+- `MUSICLENS_ENABLE_COMPOSE` / `MUSICLENS_ENABLE_LYRICS`
+- `MUSICLENS_LOG_LEVEL`
+
+### Backend container
+
+```powershell
+cd backend
+docker build -t musiclens-backend .
+docker run --rm -p 8000:8000 --env-file .env musiclens-backend
+```
+
+### CI
+
+GitHub Actions workflow is included at `.github/workflows/ci.yml`:
+- backend: install + `pytest`
+- frontend: `flutter pub get`, `flutter analyze`, `flutter test`
 
 ## 5) UI Layout + Widget Breakdown
 

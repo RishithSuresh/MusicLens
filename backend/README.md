@@ -19,7 +19,33 @@ uvicorn app.main:app --reload
 ## Endpoints
 
 - GET /health
+- GET /ready
 - POST /analyze (multipart/form-data with file)
+
+## Environment configuration
+
+Copy `.env.example` to `.env` and configure:
+- `MUSICLENS_ENV` (`development` or `production`)
+- `MUSICLENS_CORS_ORIGINS` (comma-separated origins)
+- `MUSICLENS_MAX_UPLOAD_BYTES`
+- `MUSICLENS_MAX_PROMPT_CHARS`
+- `MUSICLENS_ENABLE_COMPOSE`
+- `MUSICLENS_ENABLE_LYRICS`
+- `MUSICLENS_LOG_LEVEL`
+
+## Tests
+
+```powershell
+pip install -r requirements.txt
+pytest
+```
+
+## Docker
+
+```powershell
+docker build -t musiclens-backend .
+docker run --rm -p 8000:8000 --env-file .env musiclens-backend
+```
 
 ## Output
 

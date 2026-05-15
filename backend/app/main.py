@@ -1,12 +1,17 @@
+import logging
 import hashlib
 import random
+import time
+import uuid
 from collections.abc import Callable
 from collections import OrderedDict
 from threading import Lock
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
+from app.config import settings
 from app.models.analysis import AnalysisResponse
 from app.models.composition import CompositionRequest, CompositionResponse, RandomPromptResponse
 
@@ -20,19 +25,50 @@ _analysis_cache_lock = Lock()
 _analyze_audio_bytes: Callable[[bytes], AnalysisResponse] | None = None
 _analyze_audio_import_error: ImportError | None = None
 _analyze_audio_import_lock = Lock()
+logger = logging.getLogger("musiclens.api")
+
+logging.basicConfig(
+    level=getattr(logging, settings.log_level, logging.INFO),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=settings.cors_origins,
+    allow_credentials=not settings.has_wildcard_cors,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, object]:
+    return {
+        "status": "ok",
+        "runtime_env": settings.runtime_env,
+        "features": {
+            "compose_enabled": settings.enable_compose,
+            "lyrics_enabled": settings.enable_lyrics,
+        },
+    }
+
+
+@app.get("/ready")
+def ready() -> dict[str, object]:
+    composer_available, composer_reason = _is_compose_runtime_available()
+    analyzer_available = _get_analyze_audio_import_error_message() is None
+    return {
+        "status": "ready" if analyzer_available else "degraded",
+        "runtime_env": settings.runtime_env,
+        "dependencies": {
+            "analyzer_available": analyzer_available,
+            "composer_available": composer_available,
+        },
+        "reasons": {
+            "composer": composer_reason,
+            "analyzer": _get_analyze_audio_import_error_message(),
+        },
+    }
 
 
 _RANDOM_PROMPTS = [
@@ -125,6 +161,60 @@ def _get_analyze_audio_bytes() -> Callable[[bytes], AnalysisResponse]:
         return analyze_audio_bytes
 
 
+def _get_analyze_audio_import_error_message() -> str | None:
+    try:
+        _get_analyze_audio_bytes()
+        return None
+    except ImportError:
+        return "audio analysis dependencies are not installed"
+
+
+def _is_compose_runtime_available() -> tuple[bool, str | None]:
+    if not settings.enable_compose:
+        return False, "compose feature is disabled by MUSICLENS_ENABLE_COMPOSE"
+    try:
+        from app.services.music_composer import compose as run_compose  # noqa: F401
+        return True, None
+    except Exception:  # noqa: BLE001
+        return False, "composer dependencies are not installed"
+
+
+@app.middleware("http")
+async def request_context_middleware(request: Request, call_next: Callable) -> Response:
+    request_id = request.headers.get(settings.request_id_header, str(uuid.uuid4()))
+    started = time.perf_counter()
+    extra = {"request_id": request_id}
+
+    try:
+        response = await call_next(request)
+    except Exception:  # noqa: BLE001
+        elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+        logger.exception(
+            "request_failed method=%s path=%s elapsed_ms=%s",
+            request.method,
+            request.url.path,
+            elapsed_ms,
+            extra=extra,
+        )
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error", "request_id": request_id},
+            headers={settings.request_id_header: request_id},
+        )
+
+    elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+    logger.info(
+        "request_complete method=%s path=%s status=%s elapsed_ms=%s",
+        request.method,
+        request.url.path,
+        response.status_code,
+        elapsed_ms,
+        extra=extra,
+    )
+    response.headers[settings.request_id_header] = request_id
+    return response
+
+
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
     file_name = (file.filename or "").lower()
@@ -137,6 +227,9 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
     audio_bytes = await file.read()
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
+    if len(audio_bytes) > settings.max_upload_bytes:
+        max_mb = settings.max_upload_bytes / (1024 * 1024)
+        raise HTTPException(status_code=413, detail=f"Uploaded file exceeds {max_mb:.1f}MB limit")
 
     cache_key = _hash_audio_bytes(audio_bytes)
     cached = _cache_get(cache_key)
@@ -156,6 +249,8 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
 
     try:
         response = analyze_audio_bytes(audio_bytes)
+        if not settings.enable_lyrics:
+            response = response.model_copy(update={"lyrics": ""})
         _cache_set(cache_key, response)
         return response
     except Exception as exc:  # noqa: BLE001
@@ -169,6 +264,13 @@ def compose(request: CompositionRequest) -> CompositionResponse:
     Optional dependencies (``music21`` and the LangGraph stack) must be
     installed for this endpoint; see ``backend/requirements-composer.txt``.
     """
+    if not settings.enable_compose:
+        raise HTTPException(status_code=503, detail="Music composer feature is disabled")
+    if len(request.prompt) > settings.max_prompt_chars:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Prompt is too long; max length is {settings.max_prompt_chars} characters",
+        )
     try:
         from app.services.music_composer import compose as run_compose
     except Exception as exc:  # noqa: BLE001
