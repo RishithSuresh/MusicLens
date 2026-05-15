@@ -19,6 +19,7 @@ _analysis_cache: OrderedDict[str, AnalysisResponse] = OrderedDict()
 _analysis_cache_lock = Lock()
 _analyze_audio_bytes: Callable[[bytes], AnalysisResponse] | None = None
 _analyze_audio_import_error: Exception | None = None
+_analyze_audio_import_lock = Lock()
 
 app.add_middleware(
     CORSMiddleware,
@@ -108,14 +109,20 @@ def _get_analyze_audio_bytes() -> Callable[[bytes], AnalysisResponse]:
     if _analyze_audio_import_error is not None:
         raise _analyze_audio_import_error
 
-    try:
-        from app.services.audio_analysis import analyze_audio_bytes
-    except ImportError as exc:
-        _analyze_audio_import_error = exc
-        raise
+    with _analyze_audio_import_lock:
+        if _analyze_audio_bytes is not None:
+            return _analyze_audio_bytes
+        if _analyze_audio_import_error is not None:
+            raise _analyze_audio_import_error
 
-    _analyze_audio_bytes = analyze_audio_bytes
-    return analyze_audio_bytes
+        try:
+            from app.services.audio_analysis import analyze_audio_bytes
+        except ImportError as exc:
+            _analyze_audio_import_error = exc
+            raise
+
+        _analyze_audio_bytes = analyze_audio_bytes
+        return analyze_audio_bytes
 
 
 @app.post("/analyze", response_model=AnalysisResponse)
