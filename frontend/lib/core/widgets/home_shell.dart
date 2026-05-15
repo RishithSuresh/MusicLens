@@ -21,14 +21,16 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMixin {
+  static const int _tabCount = 2;
+
   late final TabController _tabController;
   late int _index;
 
   @override
   void initState() {
     super.initState();
-    _index = widget.initialTabIndex.clamp(0, 1).toInt();
-    _tabController = TabController(length: 2, vsync: this);
+    _index = widget.initialTabIndex.clamp(0, _tabCount - 1).toInt();
+    _tabController = TabController(length: _tabCount, vsync: this);
     _tabController.index = _index;
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
