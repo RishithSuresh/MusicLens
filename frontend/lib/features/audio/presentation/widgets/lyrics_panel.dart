@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 
 class LyricsPanel extends StatelessWidget {
@@ -25,7 +26,7 @@ class LyricsPanel extends StatelessWidget {
         : 'No lyrics detected yet. Try a clearer vocal track for better transcription.';
 
     final lyricStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: const Color(0xFF0F172A),
+      color: AppTheme.paper,
       height: 1.6,
       fontWeight: FontWeight.w700,
       letterSpacing: 0.2,
@@ -36,8 +37,8 @@ class LyricsPanel extends StatelessWidget {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.75),
-          Colors.white.withValues(alpha: 0.60),
+          AppTheme.buccaneer.withValues(alpha: 0.82),
+          AppTheme.cocoaBrown.withValues(alpha: 0.74),
         ],
       ),
       child: Column(
@@ -70,18 +71,18 @@ class LyricsPanel extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withValues(alpha: 0.85),
-                  Colors.white.withValues(alpha: 0.75),
+                  AppTheme.buccaneer.withValues(alpha: 0.78),
+                  AppTheme.cocoaBrown.withValues(alpha: 0.68),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                color: AppTheme.tan.withValues(alpha: 0.3),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF3B82F6).withValues(alpha: 0.08),
+                  color: AppTheme.capePalliser.withValues(alpha: 0.2),
                   offset: const Offset(0, 4),
                   blurRadius: 16,
                 ),

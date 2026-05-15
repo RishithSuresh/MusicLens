@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/composer_api_service.dart';
 import '../../data/composition_models.dart';
@@ -106,7 +107,7 @@ class _CompositionFormState extends State<CompositionForm> {
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome_rounded, color: Color(0xFF8B5CF6)),
+              const Icon(Icons.auto_awesome_rounded, color: AppTheme.tan),
               const SizedBox(width: 8),
               Text(
                 'AI Music Compositor',
@@ -133,7 +134,7 @@ class _CompositionFormState extends State<CompositionForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.casino_rounded),
-                  color: const Color(0xFF8B5CF6),
+                  color: AppTheme.tan,
                 ),
               ),
             ),
@@ -158,7 +159,7 @@ class _CompositionFormState extends State<CompositionForm> {
               const Expanded(
                 child: Text(
                   'Use LLM (LangGraph) when OPENAI_API_KEY is configured',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                   style: TextStyle(fontSize: 12, color: AppTheme.tan),
                 ),
               ),
             ],
@@ -212,11 +213,11 @@ class _CompositionFormState extends State<CompositionForm> {
     return Row(
       children: [
         SizedBox(
-          width: 70,
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF334155))),
+           width: 70,
+           child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.paper)),
         ),
         Expanded(child: Slider(value: value, min: min, max: max, onChanged: onChanged)),
-        SizedBox(width: 80, child: Text(display, style: const TextStyle(color: Color(0xFF64748B)))),
+        SizedBox(width: 80, child: Text(display, style: const TextStyle(color: AppTheme.tan))),
       ],
     );
   }

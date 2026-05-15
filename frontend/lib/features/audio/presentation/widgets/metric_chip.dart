@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
+
 class MetricChip extends StatefulWidget {
   const MetricChip({
     required this.label,
@@ -44,7 +46,7 @@ class _MetricChipState extends State<MetricChip> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accentColor = widget.color ?? const Color(0xFF3B82F6);
+    final accentColor = widget.color ?? AppTheme.antiqueBrass;
 
     return MouseRegion(
       onEnter: (_) {
@@ -66,10 +68,10 @@ class _MetricChipState extends State<MetricChip> with SingleTickerProviderStateM
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withValues(alpha: _isHovered ? 0.90 : 0.80),
-                    Colors.white.withValues(alpha: _isHovered ? 0.85 : 0.70),
-                  ],
+                    colors: [
+                      AppTheme.buccaneer.withValues(alpha: _isHovered ? 0.92 : 0.84),
+                      AppTheme.cocoaBrown.withValues(alpha: _isHovered ? 0.88 : 0.76),
+                    ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
@@ -105,7 +107,7 @@ class _MetricChipState extends State<MetricChip> with SingleTickerProviderStateM
                     style: theme.textTheme.labelSmall?.copyWith(
                       letterSpacing: 1.0,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF64748B),
+                       color: AppTheme.tan,
                     ),
                   ),
                   const SizedBox(height: 6),

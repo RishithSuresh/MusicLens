@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/composition_models.dart';
 
@@ -19,10 +20,10 @@ class PianoRoll extends StatelessWidget {
   final double currentBeat;
 
   static const Map<String, Color> _trackColors = {
-    'Melody': Color(0xFF3B82F6),
-    'Harmony': Color(0xFF8B5CF6),
-    'Bass': Color(0xFFEC4899),
-    'Drums': Color(0xFF06B6D4),
+    'Melody': AppTheme.tan,
+    'Harmony': AppTheme.antiqueBrass,
+    'Bass': AppTheme.capePalliser,
+    'Drums': AppTheme.buccaneer,
   };
 
   @override
@@ -35,13 +36,13 @@ class PianoRoll extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.piano_rounded, size: 18, color: Color(0xFF3B82F6)),
+              const Icon(Icons.piano_rounded, size: 18, color: AppTheme.tan),
               const SizedBox(width: 8),
               Text(
                 'Piano Roll',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F172A),
+                       color: AppTheme.paper,
                     ),
               ),
               const Spacer(),
@@ -66,7 +67,7 @@ class PianoRoll extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF475569),
+                           color: AppTheme.tan,
                         ),
                       ),
                     ],
@@ -114,7 +115,7 @@ class _PianoRollPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bg = Paint()..color = const Color(0xFFF8FAFC);
+    final bg = Paint()..color = AppTheme.cocoaBrown.withValues(alpha: 0.8);
     canvas.drawRect(Offset.zero & size, bg);
 
     if (totalBeats <= 0) {
@@ -128,15 +129,15 @@ class _PianoRollPainter extends CustomPainter {
       final x2 = (section.endBeat / totalBeats) * size.width;
       final paint = Paint()
         ..color = (i.isEven
-                ? const Color(0xFF3B82F6)
-                : const Color(0xFF8B5CF6))
+                ? AppTheme.buccaneer
+                : AppTheme.capePalliser)
             .withValues(alpha: 0.05);
       canvas.drawRect(Rect.fromLTWH(x1, 0, x2 - x1, size.height), paint);
 
       final labelStyle = TextStyle(
         fontSize: 9,
         fontWeight: FontWeight.w700,
-        color: const Color(0xFF475569).withValues(alpha: 0.85),
+        color: AppTheme.tan.withValues(alpha: 0.85),
         letterSpacing: 0.6,
       );
       final tp = TextPainter(
@@ -199,7 +200,7 @@ class _PianoRollPainter extends CustomPainter {
     // Playhead.
     final px = (currentBeat / totalBeats).clamp(0.0, 1.0) * size.width;
     final headPaint = Paint()
-      ..color = const Color(0xFFEC4899)
+      ..color = AppTheme.paper
       ..strokeWidth = 1.5;
     canvas.drawLine(Offset(px, 0), Offset(px, size.height), headPaint);
   }

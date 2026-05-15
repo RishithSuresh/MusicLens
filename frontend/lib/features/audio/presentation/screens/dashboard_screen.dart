@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/analysis_models.dart';
 import '../../data/audio_api_service.dart';
@@ -248,8 +249,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.8),
-          Colors.white.withValues(alpha: 0.65),
+          AppTheme.buccaneer.withValues(alpha: 0.9),
+          AppTheme.cocoaBrown.withValues(alpha: 0.82),
         ],
       ),
       child: Wrap(
@@ -260,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ShaderMask(
             shaderCallback: (bounds) {
               return const LinearGradient(
-                colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                colors: [AppTheme.tan, AppTheme.antiqueBrass],
               ).createShader(bounds);
             },
             child: Text(
@@ -272,7 +273,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE2E8F0)),
+           VerticalDivider(width: 1, thickness: 1, color: AppTheme.tan.withValues(alpha: 0.35)),
           _buildActionButton(
             onPressed: _pickAudio,
             icon: Icons.audio_file_rounded,
@@ -315,9 +316,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: const Color(0xFFF1F5F9).withValues(alpha: 0.8),
+                color: AppTheme.buccaneer.withValues(alpha: 0.7),
                 border: Border.all(
-                  color: const Color(0xFFE2E8F0),
+                  color: AppTheme.tan.withValues(alpha: 0.45),
                   width: 1.5,
                 ),
               ),
@@ -326,7 +327,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ? '${_selectedFile?.name.substring(0, 17) ?? ''}...'
                     : (_selectedFile?.name ?? 'No file'),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF475569),
+                   color: AppTheme.tan,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.2,
                 ),
@@ -362,11 +363,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           : Icon(icon, size: 18),
       label: Text(label),
       style: FilledButton.styleFrom(
-        backgroundColor: isPrimary ? theme.colorScheme.primary : const Color(0xFFF1F5F9),
-        foregroundColor: isPrimary ? Colors.white : theme.colorScheme.primary,
+        backgroundColor: isPrimary ? AppTheme.antiqueBrass : AppTheme.buccaneer,
+        foregroundColor: isPrimary ? AppTheme.cocoaBrown : AppTheme.tan,
         elevation: isPrimary ? 6 : 2,
         shadowColor: isPrimary
-            ? theme.colorScheme.primary.withValues(alpha: 0.4)
+            ? AppTheme.capePalliser.withValues(alpha: 0.4)
             : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         shape: RoundedRectangleBorder(
@@ -684,21 +685,21 @@ class _EnhancedToggleChipState extends State<_EnhancedToggleChip>
             avatar: Icon(
               widget.icon,
               size: 18,
-              color: widget.selected ? Colors.white : const Color(0xFF3B82F6),
+              color: widget.selected ? AppTheme.cocoaBrown : AppTheme.tan,
             ),
             label: Text(
               widget.label,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: widget.selected ? Colors.white : const Color(0xFF3B82F6),
+                color: widget.selected ? AppTheme.cocoaBrown : AppTheme.tan,
               ),
             ),
-            backgroundColor: Colors.white.withValues(alpha: 0.7),
-            selectedColor: const Color(0xFF3B82F6),
+            backgroundColor: AppTheme.buccaneer.withValues(alpha: 0.76),
+            selectedColor: AppTheme.antiqueBrass,
             side: BorderSide(
               color: widget.selected
-                  ? const Color(0xFF3B82F6)
-                  : const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                  ? AppTheme.antiqueBrass
+                  : AppTheme.tan.withValues(alpha: 0.35),
               width: widget.selected ? 2 : 1.5,
             ),
             elevation: widget.selected ? 6 : 2,

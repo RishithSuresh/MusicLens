@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
+
 class TimelineScrubber extends StatefulWidget {
   const TimelineScrubber({
     required this.currentTime,
@@ -66,10 +68,10 @@ class _TimelineScrubberState extends State<TimelineScrubber> {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 4,
-                        backgroundColor: const Color(0xFFE2E8F0),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF2563EB),
-                        ),
+                         backgroundColor: AppTheme.buccaneer.withValues(alpha: 0.7),
+                         valueColor: const AlwaysStoppedAnimation<Color>(
+                           AppTheme.antiqueBrass,
+                         ),
                       ),
                     ),
                   ),
@@ -80,14 +82,14 @@ class _TimelineScrubberState extends State<TimelineScrubber> {
                       Text(
                         _formatTime(displayTime),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: const Color(0xFF334155),
+                              color: AppTheme.tan,
                               fontWeight: FontWeight.w600,
                             ),
                       ),
                       Text(
                         _formatTime(widget.totalDuration),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: const Color(0xFF64748B),
+                              color: AppTheme.tan.withValues(alpha: 0.85),
                               fontWeight: FontWeight.w500,
                             ),
                       ),

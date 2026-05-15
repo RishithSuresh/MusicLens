@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/composer_api_service.dart';
 import '../../data/composition_models.dart';
@@ -223,8 +224,8 @@ class _ComposerScreenState extends State<ComposerScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFFF8FAFF).withValues(alpha: 0.6),
-            const Color(0xFFF5F3FF).withValues(alpha: 0.35),
+            AppTheme.buccaneer.withValues(alpha: 0.32),
+            AppTheme.cocoaBrown.withValues(alpha: 0.15),
             Colors.transparent,
           ],
         ),
@@ -311,8 +312,8 @@ class _ComposerScreenState extends State<ComposerScreen> {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.82),
-          const Color(0xFFF5F3FF).withValues(alpha: 0.62),
+          AppTheme.buccaneer.withValues(alpha: 0.86),
+          AppTheme.cocoaBrown.withValues(alpha: 0.72),
         ],
       ),
       child: Row(
@@ -323,10 +324,10 @@ class _ComposerScreenState extends State<ComposerScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               gradient: const LinearGradient(
-                colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                colors: [AppTheme.tan, AppTheme.antiqueBrass],
               ),
             ),
-            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+            child: const Icon(Icons.auto_awesome_rounded, color: AppTheme.cocoaBrown, size: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -337,14 +338,14 @@ class _ComposerScreenState extends State<ComposerScreen> {
                   'AI Music Composer Studio',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
+                        color: AppTheme.paper,
                       ),
                 ),
                 const SizedBox(height: 2),
                 const Text(
                   'Generate, preview, and export MIDI + MP3 ideas in seconds.',
                   style: TextStyle(
-                    color: Color(0xFF475569),
+                    color: AppTheme.tan,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -363,13 +364,13 @@ class _ComposerScreenState extends State<ComposerScreen> {
         padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 12),
         child: Column(
           children: [
-            const Icon(Icons.music_note_rounded, size: 48, color: Color(0xFF8B5CF6)),
+            const Icon(Icons.music_note_rounded, size: 48, color: AppTheme.tan),
             const SizedBox(height: 12),
             Text(
               'Describe the music and press Compose.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF334155),
+                    color: AppTheme.paper,
                     fontWeight: FontWeight.w700,
                   ),
             ),
@@ -379,7 +380,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
                  'then a procedural music engine arranges melody, harmony, '
                  'bass, and drums into a MIDI piece with optional in-app MP3 preview.',
                  textAlign: TextAlign.center,
-                 style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+                 style: TextStyle(color: AppTheme.tan, height: 1.5),
                ),
           ],
         ),
@@ -404,14 +405,14 @@ class _ComposerScreenState extends State<ComposerScreen> {
                 child: IconButton(
                   onPressed: _isAudioPrepared ? _togglePlay : null,
                   icon: Icon(_playing ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded),
-                  color: const Color(0xFF3B82F6),
+                  color: AppTheme.antiqueBrass,
                   iconSize: 36,
                 ),
               ),
               IconButton(
                 onPressed: _resetPlayhead,
                 icon: const Icon(Icons.replay_rounded),
-                color: const Color(0xFF475569),
+                color: AppTheme.tan,
                 tooltip: 'Reset playhead',
               ),
               const SizedBox(width: 6),
@@ -422,8 +423,8 @@ class _ComposerScreenState extends State<ComposerScreen> {
                   children: [
                     LinearProgressIndicator(
                       value: c.metadata.totalBeats == 0 ? 0 : (beat / c.metadata.totalBeats).clamp(0.0, 1.0),
-                      backgroundColor: const Color(0xFFE2E8F0),
-                      color: const Color(0xFF8B5CF6),
+                      backgroundColor: AppTheme.buccaneer.withValues(alpha: 0.7),
+                      color: AppTheme.antiqueBrass,
                       minHeight: 6,
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -431,7 +432,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
                     Text(
                       'Beat ${beat.toStringAsFixed(1)} / ${c.metadata.totalBeats.toStringAsFixed(0)}'
                       '   ·   ${c.metadata.tempoBpm} BPM',
-                      style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                      style: const TextStyle(color: AppTheme.tan, fontSize: 12),
                     ),
                   ],
                 ),
@@ -457,20 +458,20 @@ class _ComposerScreenState extends State<ComposerScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+              color: AppTheme.capePalliser.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.2)),
+              border: Border.all(color: AppTheme.tan.withValues(alpha: 0.32)),
             ),
              child: Row(
                children: [
-                 const Icon(Icons.info_rounded, size: 16, color: Color(0xFF8B5CF6)),
+                 const Icon(Icons.info_rounded, size: 16, color: AppTheme.tan),
                  const SizedBox(width: 8),
                  Expanded(
                    child: Text(
                       _isAudioPrepared
                           ? 'Playing synthesized MP3 preview in-app. Export MIDI for DAWs and MIDI editors.'
                           : 'MP3 preview unavailable due to backend synthesis failure. You can still export MIDI.',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 11, color: AppTheme.tan),
                     ),
                   ),
                ],
