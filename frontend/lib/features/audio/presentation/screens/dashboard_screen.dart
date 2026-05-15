@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -120,6 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         MetricChip(label: 'Sample Rate', value: '${_analysis?.sampleRate ?? 0} Hz'),
                         MetricChip(label: 'Energy', value: '${(energy * 100).toStringAsFixed(0)}%'),
                         MetricChip(label: 'Genre', value: _analysis?.genre ?? 'Unknown'),
+                        MetricChip(label: 'Key', value: _estimatedKey),
                         MetricChip(label: 'Playhead', value: '${_currentTime.toStringAsFixed(2)}s'),
                       ],
                     ),
@@ -249,8 +251,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppTheme.buccaneer.withValues(alpha: 0.9),
-          AppTheme.cocoaBrown.withValues(alpha: 0.82),
+          AppTheme.paper.withValues(alpha: 0.88),
+          AppTheme.ivory.withValues(alpha: 0.84),
         ],
       ),
       child: Wrap(
@@ -322,12 +324,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: 1.5,
                 ),
               ),
-              child: Text(
-                ((_selectedFile?.name.length ?? 0) > 20)
-                    ? '${_selectedFile?.name.substring(0, 17) ?? ''}...'
-                    : (_selectedFile?.name ?? 'No file'),
+               child: Text(
+                 ((_selectedFile?.name.length ?? 0) > 20)
+                     ? '${_selectedFile?.name.substring(0, 17) ?? ''}...'
+                     : (_selectedFile?.name ?? 'No file'),
                 style: theme.textTheme.bodySmall?.copyWith(
-                   color: AppTheme.tan,
+                   color: AppTheme.paper,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.2,
                 ),
@@ -601,6 +603,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final minPitch = pitchValues.reduce((a, b) => a < b ? a : b);
     final maxPitch = pitchValues.reduce((a, b) => a > b ? a : b);
     return maxPitch - minPitch;
+  }
+
+  String get _estimatedKey {
+    final analysis = _analysis;
+    if (analysis == null) {
+      return 'Unknown';
+    }
+
+    final pitchValues = analysis.pitchHz.where((p) => p > 0).toList(growable: false);
+    if (pitchValues.isEmpty) {
+      return 'Unknown';
+    }
+
+    final histogram = List<double>.filled(12, 0.0);
+    for (final hz in pitchValues) {
+      final midi = 69 + (12 * math.log(hz / 440.0) / math.ln2);
+      final pitchClass = (midi.round() % 12 + 12) % 12;
+      histogram[pitchClass] += 1;
+    }
+
+    final majorProfile = <double>[6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
+    final minorProfile = <double>[6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
+    final noteNames = <String>['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    double bestScore = double.negativeInfinity;
+    double secondBest = double.negativeInfinity;
+    int bestRoot = 0;
+    bool bestMinor = false;
+
+    for (var root = 0; root < 12; root++) {
+      var majorScore = 0.0;
+      var minorScore = 0.0;
+      for (var i = 0; i < 12; i++) {
+        majorScore += histogram[(i + root) % 12] * majorProfile[i];
+        minorScore += histogram[(i + root) % 12] * minorProfile[i];
+      }
+
+      if (majorScore > bestScore) {
+        secondBest = bestScore;
+        bestScore = majorScore;
+        bestRoot = root;
+        bestMinor = false;
+      } else if (majorScore > secondBest) {
+        secondBest = majorScore;
+      }
+
+      if (minorScore > bestScore) {
+        secondBest = bestScore;
+        bestScore = minorScore;
+        bestRoot = root;
+        bestMinor = true;
+      } else if (minorScore > secondBest) {
+        secondBest = minorScore;
+      }
+    }
+
+    final spread = bestScore <= 0 ? 0.0 : ((bestScore - secondBest) / bestScore).clamp(0.0, 1.0);
+    final confidence = (spread * 100).round();
+    final modeLabel = bestMinor ? 'min' : 'maj';
+    return '${noteNames[bestRoot]} $modeLabel · $confidence%';
   }
 
   String get _currentInsight {

@@ -224,8 +224,8 @@ class _ComposerScreenState extends State<ComposerScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppTheme.buccaneer.withValues(alpha: 0.32),
-            AppTheme.cocoaBrown.withValues(alpha: 0.15),
+            AppTheme.ivory.withValues(alpha: 0.92),
+            AppTheme.paper.withValues(alpha: 0.7),
             Colors.transparent,
           ],
         ),
@@ -312,8 +312,8 @@ class _ComposerScreenState extends State<ComposerScreen> {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppTheme.buccaneer.withValues(alpha: 0.86),
-          AppTheme.cocoaBrown.withValues(alpha: 0.72),
+          AppTheme.paper.withValues(alpha: 0.92),
+          AppTheme.ivory.withValues(alpha: 0.88),
         ],
       ),
       child: Row(
@@ -338,14 +338,14 @@ class _ComposerScreenState extends State<ComposerScreen> {
                   'AI Music Composer Studio',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.paper,
+                        color: AppTheme.cocoaBrown,
                       ),
                 ),
                 const SizedBox(height: 2),
                 const Text(
                   'Generate, preview, and export MIDI + MP3 ideas in seconds.',
                   style: TextStyle(
-                    color: AppTheme.tan,
+                    color: AppTheme.buccaneer,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
