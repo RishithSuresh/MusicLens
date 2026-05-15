@@ -110,7 +110,7 @@ def _get_analyze_audio_bytes() -> Callable[[bytes], AnalysisResponse]:
 
     try:
         from app.services.audio_analysis import analyze_audio_bytes
-    except (ImportError, ModuleNotFoundError) as exc:
+    except ImportError as exc:
         _analyze_audio_import_error = exc
         raise
 
@@ -138,7 +138,7 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
 
     try:
         analyze_audio_bytes = _get_analyze_audio_bytes()
-    except (ImportError, ModuleNotFoundError) as exc:
+    except ImportError as exc:
         raise HTTPException(
             status_code=503,
             detail=(
