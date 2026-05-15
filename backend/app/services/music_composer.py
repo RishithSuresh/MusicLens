@@ -172,15 +172,20 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                     t = np.arange(samples_to_add) / sample_rate
 
                     if track.is_drum:
-                        freq = DRUM_BASE_FREQ_HZ + ((note.pitch % 12) * DRUM_PITCH_STEP_HZ)
+                        drum_pitch_offset = max(0, min(46, note.pitch - 35))
+                        freq = DRUM_BASE_FREQ_HZ + (drum_pitch_offset * DRUM_PITCH_STEP_HZ)
                         envelope = np.exp(-DRUM_DECAY_RATE * t)
                         note_data = np.sin(2 * np.pi * freq * t) * envelope * velocity * 0.4
                     else:
                         freq = midi_to_freq(note.pitch)
                         note_data = np.sin(2 * np.pi * freq * t) * velocity * 0.28
-                        fade = min(samples_to_add, max(1, int(NOTE_FADE_SECONDS * sample_rate)))
-                        note_data[:fade] *= np.linspace(0.0, 1.0, fade)
-                        note_data[-fade:] *= np.linspace(1.0, 0.0, fade)
+                        if samples_to_add >= 4:
+                            fade = min(
+                                max(1, int(NOTE_FADE_SECONDS * sample_rate)),
+                                samples_to_add // 2,
+                            )
+                            note_data[:fade] *= np.linspace(0.0, 1.0, fade)
+                            note_data[-fade:] *= np.linspace(1.0, 0.0, fade)
 
                     audio_data[start_sample:end_sample] += note_data.astype(np.float32)
 
