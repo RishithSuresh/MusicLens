@@ -37,6 +37,10 @@ class WaveformPanel extends StatefulWidget {
 }
 
 class _WaveformPanelState extends State<WaveformPanel> {
+  static const double _compactWaveformHeight = 220;
+  static const double _tooltipOffsetX = 8;
+  static const double _tooltipWidth = 150;
+
   double? _hoverX;
 
   @override
@@ -53,7 +57,7 @@ class _WaveformPanelState extends State<WaveformPanel> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-          final hoverTime = _hoverX != null
+          final hoverTime = _hoverX != null && width > 0
               ? ((_hoverX! / width) * widget.duration).clamp(0.0, widget.duration)
               : null;
 
@@ -67,66 +71,15 @@ class _WaveformPanelState extends State<WaveformPanel> {
                 ),
                 const SizedBox(height: 12),
               ],
-              Expanded(
-                child: MouseRegion(
-                opaque: true,
-                onHover: (event) {
-                  final nextX = event.localPosition.dx.clamp(0.0, width);
-                  if (_hoverX == null || (_hoverX! - nextX).abs() > 0.75) {
-                    setState(() {
-                      _hoverX = nextX;
-                    });
-                  }
-                },
-                onExit: (_) => setState(() => _hoverX = null),
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (details) => _seekFromLocalX(details.localPosition.dx, width),
-                  onHorizontalDragUpdate: (details) => _seekFromLocalX(details.localPosition.dx, width),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ClipRect(
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: RepaintBoundary(
-                              child: ReactiveParticleField(intensity: widget.currentBass),
-                            ),
-                          ),
-                          Positioned.fill(
-                            child: RepaintBoundary(
-                              child: CustomPaint(
-                                painter: _WaveformPainter(
-                                  energy: values,
-                                  pitch: pitch,
-                                  beatTimestamps: widget.beatTimestamps,
-                                  duration: widget.duration,
-                                  currentTime: widget.currentTime,
-                                  currentEnergy: widget.currentEnergy,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (_hoverX != null && hoverTime != null)
-                            Positioned(
-                              left: (_hoverX! + 8).clamp(0, width - 150),
-                              top: widget.compact ? 10 : 12,
-                              child: RepaintBoundary(
-                                child: _HoverTooltip(
-                                  bpm: widget.bpm,
-                                  time: hoverTime,
-                                  pitch: _valueAtTime(pitch, hoverTime),
-                                  energy: _valueAtTime(values, hoverTime),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
+              if (widget.compact)
+                SizedBox(
+                  height: _compactWaveformHeight,
+                  child: _buildWaveformArea(values, pitch, width, hoverTime),
+                )
+              else
+                Expanded(
+                  child: _buildWaveformArea(values, pitch, width, hoverTime),
                 ),
-              ),
-              ),
             ],
           );
         },
@@ -134,7 +87,79 @@ class _WaveformPanelState extends State<WaveformPanel> {
     );
   }
 
+  Widget _buildWaveformArea(
+    List<double> values,
+    List<double> pitch,
+    double width,
+    double? hoverTime,
+  ) {
+    return MouseRegion(
+      opaque: true,
+      onHover: (event) {
+        if (width <= 0) {
+          return;
+        }
+        final nextX = event.localPosition.dx.clamp(0.0, width);
+        if (_hoverX == null || (_hoverX! - nextX).abs() > 0.75) {
+          setState(() {
+            _hoverX = nextX;
+          });
+        }
+      },
+      onExit: (_) => setState(() => _hoverX = null),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (details) => _seekFromLocalX(details.localPosition.dx, width),
+        onHorizontalDragUpdate: (details) => _seekFromLocalX(details.localPosition.dx, width),
+        child: SizedBox(
+          width: double.infinity,
+          child: ClipRect(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: ReactiveParticleField(intensity: widget.currentBass),
+                  ),
+                ),
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: _WaveformPainter(
+                        energy: values,
+                        pitch: pitch,
+                        beatTimestamps: widget.beatTimestamps,
+                        duration: widget.duration,
+                        currentTime: widget.currentTime,
+                        currentEnergy: widget.currentEnergy,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_hoverX != null && hoverTime != null)
+                  Positioned(
+                    left: (_hoverX! + _tooltipOffsetX).clamp(0, width - _tooltipWidth),
+                    top: widget.compact ? 10 : 12,
+                    child: RepaintBoundary(
+                      child: _HoverTooltip(
+                        bpm: widget.bpm,
+                        time: hoverTime,
+                        pitch: _valueAtTime(pitch, hoverTime),
+                        energy: _valueAtTime(values, hoverTime),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _seekFromLocalX(double localX, double width) {
+    if (width <= 0 || widget.duration <= 0) {
+      return;
+    }
     final clamped = localX.clamp(0.0, width);
     final time = (clamped / width) * widget.duration;
     widget.onSeek(time);
@@ -207,6 +232,15 @@ class _WaveformPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (energy.isEmpty || pitch.isEmpty || size.width <= 0 || size.height <= 0) {
+      return;
+    }
+
+    final energyDivisor = math.max(1, energy.length - 1).toDouble();
+    final pitchDivisor = math.max(1, pitch.length - 1).toDouble();
+    final isSingleEnergySample = energy.length == 1;
+    final isSinglePitchSample = pitch.length == 1;
+
     final accent = Color.lerp(
       AppTheme.antiqueBrass,
       AppTheme.tan,
@@ -242,7 +276,7 @@ class _WaveformPainter extends CustomPainter {
     final centerY = size.height * 0.58;
 
     for (int i = 0; i < energy.length; i++) {
-      final x = i / (energy.length - 1) * size.width;
+      final x = isSingleEnergySample ? size.width * 0.5 : i / energyDivisor * size.width;
       final amp = (energy[i].clamp(0, 1) as double) * (size.height * 0.42);
       final y = centerY - amp;
 
@@ -274,7 +308,7 @@ class _WaveformPainter extends CustomPainter {
 
     final pitchPath = Path();
     for (int i = 0; i < pitch.length; i++) {
-      final x = i / (pitch.length - 1) * size.width;
+      final x = isSinglePitchSample ? size.width * 0.5 : i / pitchDivisor * size.width;
       final normalized = ((pitch[i] - minPitch) / pitchRange).clamp(0.0, 1.0);
       final y = size.height * 0.86 - (normalized * (size.height * 0.36));
       if (i == 0) {
