@@ -37,6 +37,8 @@ DRUM_MIDI_MAX_OFFSET = 46
 DRUM_VOLUME_SCALE = 0.4
 NOTE_VOLUME_SCALE = 0.28
 AUDIO_NORMALIZATION_HEADROOM = 0.95
+FALLBACK_BEAT_MULTIPLIER = 2
+MIN_NOTE_DURATION_BEATS = 0.125
 
 
 def _to_response_track(track: TrackData) -> CompositionTrack:
@@ -144,10 +146,10 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
             from scipy.io import wavfile
 
             seconds_per_beat = 60.0 / tempo_bpm
-            fallback_total_beats = float(beats_per_bar * 2)
+            fallback_total_beats = float(beats_per_bar * FALLBACK_BEAT_MULTIPLIER)
             total_beats = max(
                 (
-                    note.start_beat + max(note.duration_beats, 0.125)
+                    note.start_beat + max(note.duration_beats, MIN_NOTE_DURATION_BEATS)
                     for track in tracks
                     for note in track.notes
                 ),
@@ -166,7 +168,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                     start_sample = max(0, int(note.start_beat * seconds_per_beat * sample_rate))
                     duration_samples = max(
                         1,
-                        int(max(note.duration_beats, 0.125) * seconds_per_beat * sample_rate),
+                        int(max(note.duration_beats, MIN_NOTE_DURATION_BEATS) * seconds_per_beat * sample_rate),
                     )
                     end_sample = min(len(audio_data), start_sample + duration_samples)
                     samples_to_add = end_sample - start_sample
