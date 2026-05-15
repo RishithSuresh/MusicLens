@@ -120,7 +120,8 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
         print(
             "Warning: pydub not available "
             f"({e}). MP3 export disabled. "
-            "Install composer dependencies: pip install -r requirements-composer.txt"
+            "Install backend dependencies: pip install -r requirements.txt "
+            "(or the full composer set: pip install -r requirements-composer.txt)"
         )
         return None
 

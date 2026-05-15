@@ -8,7 +8,8 @@ FastAPI audio analysis backend.
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-# Optional: install AI Music Composer dependencies (required for /compose + MP3 preview/export)
+# Optional: install full AI Music Composer stack for /compose
+# (music21/mido/LangGraph). MP3 encoding dependency (pydub) is included in requirements.txt.
 pip install -r requirements-composer.txt
 uvicorn app.main:app --reload
 ```
