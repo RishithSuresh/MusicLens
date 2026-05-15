@@ -28,6 +28,10 @@ from app.services.procedural_composer import (
 )
 
 MIN_MP3_SIZE_BYTES = 100
+DRUM_BASE_FREQ_HZ = 120
+DRUM_PITCH_STEP_HZ = 25
+DRUM_DECAY_RATE = 12
+NOTE_FADE_SECONDS = 0.01
 
 
 def _to_response_track(track: TrackData) -> CompositionTrack:
@@ -168,13 +172,13 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                     t = np.arange(samples_to_add) / sample_rate
 
                     if track.is_drum:
-                        freq = 120 + ((note.pitch % 12) * 25)
-                        envelope = np.exp(-12 * t)
+                        freq = DRUM_BASE_FREQ_HZ + ((note.pitch % 12) * DRUM_PITCH_STEP_HZ)
+                        envelope = np.exp(-DRUM_DECAY_RATE * t)
                         note_data = np.sin(2 * np.pi * freq * t) * envelope * velocity * 0.4
                     else:
                         freq = midi_to_freq(note.pitch)
                         note_data = np.sin(2 * np.pi * freq * t) * velocity * 0.28
-                        fade = min(samples_to_add, max(1, int(0.01 * sample_rate)))
+                        fade = min(samples_to_add, max(1, int(NOTE_FADE_SECONDS * sample_rate)))
                         note_data[:fade] *= np.linspace(0.0, 1.0, fade)
                         note_data[-fade:] *= np.linspace(1.0, 0.0, fade)
 
