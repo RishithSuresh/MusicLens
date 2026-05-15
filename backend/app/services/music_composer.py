@@ -32,6 +32,11 @@ DRUM_BASE_FREQ_HZ = 120
 DRUM_PITCH_STEP_HZ = 25
 DRUM_DECAY_RATE = 12
 NOTE_FADE_SECONDS = 0.01
+DRUM_MIDI_BASE_NOTE = 35
+DRUM_MIDI_MAX_OFFSET = 46
+DRUM_VOLUME_SCALE = 0.4
+NOTE_VOLUME_SCALE = 0.28
+AUDIO_NORMALIZATION_HEADROOM = 0.95
 
 
 def _to_response_track(track: TrackData) -> CompositionTrack:
@@ -172,13 +177,16 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                     t = np.arange(samples_to_add) / sample_rate
 
                     if track.is_drum:
-                        drum_pitch_offset = max(0, min(46, note.pitch - 35))
+                        drum_pitch_offset = max(
+                            0,
+                            min(DRUM_MIDI_MAX_OFFSET, note.pitch - DRUM_MIDI_BASE_NOTE),
+                        )
                         freq = DRUM_BASE_FREQ_HZ + (drum_pitch_offset * DRUM_PITCH_STEP_HZ)
                         envelope = np.exp(-DRUM_DECAY_RATE * t)
-                        note_data = np.sin(2 * np.pi * freq * t) * envelope * velocity * 0.4
+                        note_data = np.sin(2 * np.pi * freq * t) * envelope * velocity * DRUM_VOLUME_SCALE
                     else:
                         freq = midi_to_freq(note.pitch)
-                        note_data = np.sin(2 * np.pi * freq * t) * velocity * 0.28
+                        note_data = np.sin(2 * np.pi * freq * t) * velocity * NOTE_VOLUME_SCALE
                         if samples_to_add >= 4:
                             fade = min(
                                 max(1, int(NOTE_FADE_SECONDS * sample_rate)),
@@ -191,7 +199,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
 
             max_val = np.max(np.abs(audio_data))
             if max_val > 0:
-                audio_data = audio_data / max_val * 0.95
+                audio_data = audio_data / max_val * AUDIO_NORMALIZATION_HEADROOM
             audio_int = (audio_data * 32767).astype(np.int16)
             wavfile.write(wav_path, sample_rate, audio_int)
         except ImportError as e:
