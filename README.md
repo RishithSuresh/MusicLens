@@ -1,12 +1,19 @@
 # MusicLens - Interactive Visual Music Explainer & AI Compositor
 
-MusicLens is a two-part system:
-- FastAPI backend for audio feature extraction, rule-based music insight
-  generation, and an AI Music Compositor (LangGraph + procedural engine).
-- Flutter frontend (light-themed premium dashboard style) with two tabs:
-  **Analyze** (interactive visual exploration of an uploaded track) and
-  **Compose** (prompt-driven multi-track music generation with piano-roll
-  visualization, in-app MP3 preview, and MIDI/MP3 export).
+MusicLens is an interactive music analysis and generation project that pairs a
+FastAPI backend with a Flutter frontend. It lets you upload an audio file to
+inspect tempo, pitch, energy, and rule-based insights, or generate a new piece
+from a text prompt with a multi-track arrangement, piano-roll visualization,
+and downloadable MIDI / MP3 output.
+
+At a glance:
+- FastAPI backend for audio feature extraction, best-effort lyrics
+  transcription, and AI-assisted composition.
+- Flutter frontend with a light, premium dashboard UI and two core modes:
+  **Analyze** for audio exploration and **Compose** for prompt-driven music
+  generation.
+- MP3 preview/export is self-contained in the backend using a bundled encoder,
+  so no system ffmpeg install is required for the compose workflow.
 
 ## 1) Folder Structure
 
@@ -78,7 +85,7 @@ MusicLens/
     voice leading, genre-aware drum + bass patterns, song-level
     intro/verse/chorus/bridge/outro structure)
   - Multi-track output: melody, harmony, bass, drums (note-level JSON +
-    base64-encoded MIDI file + optional base64-encoded MP3 preview audio)
+    base64-encoded MIDI file + base64-encoded MP3 preview audio)
   - Frontend Compose tab with composition form, piano-roll visualizer,
     AI narrative panel, in-app audio playback, and MIDI/MP3 download
 
@@ -103,8 +110,6 @@ pip install -r requirements-lyrics.txt
 # The /compose endpoint works without LangGraph/LangChain and falls back to
 # the deterministic procedural engine when LLM dependencies are absent.
 pip install -r requirements-composer.txt
-# Optional but recommended for MP3 preview/export support
-winget install Gyan.FFmpeg
 uvicorn app.main:app --reload
 ```
 
@@ -185,3 +190,12 @@ Note: lyrics transcription is best-effort and requires optional Whisper installa
 
 Optional for future:
 - Instrument separation and comparative analytics pages
+
+## 7) Project Description
+
+MusicLens is designed as a hands-on music intelligence demo. The analyzer turns
+an uploaded song into visual and textual summaries of rhythm, energy, and
+spectral shape, while the composer turns a written prompt into a structured
+piece of music that can be previewed directly in the browser. The project is
+useful as both a portfolio piece and a practical prototype for music analysis,
+procedural composition, and lightweight AI-assisted creativity.
