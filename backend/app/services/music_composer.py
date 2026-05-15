@@ -131,10 +131,12 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
     import tempfile
 
     try:
+        import numpy as np
         from pydub import AudioSegment
+        from scipy.io import wavfile
     except ImportError as e:
         print(
-            "Warning: pydub not available "
+            "Warning: audio synthesis dependencies not available "
             f"({e}). MP3 export disabled. "
             "Install backend dependencies: pip install -r requirements.txt "
             "(or the full composer set: pip install -r requirements-composer.txt)"
@@ -145,9 +147,6 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_temp:
             wav_path = wav_temp.name
         try:
-            import numpy as np
-            from scipy.io import wavfile
-
             seconds_per_beat = 60.0 / tempo_bpm
             total_beats = max(
                 (
@@ -206,8 +205,8 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                 audio_data = audio_data / max_val * AUDIO_NORMALIZATION_HEADROOM
             audio_int = (audio_data * 32767).astype(np.int16)
             wavfile.write(wav_path, sample_rate, audio_int)
-        except ImportError as e:
-            print(f"Warning: audio synthesis dependencies missing ({e}). MP3 export skipped.")
+        except Exception as e:
+            print(f"Warning: Failed to synthesize WAV ({e}).")
             if os.path.exists(wav_path):
                 os.remove(wav_path)
             return None
