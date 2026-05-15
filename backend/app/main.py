@@ -165,8 +165,8 @@ def _get_analyze_audio_import_error_message() -> str | None:
     try:
         _get_analyze_audio_bytes()
         return None
-    except ImportError as exc:
-        return str(exc)
+    except ImportError:
+        return "audio analysis dependencies are not installed"
 
 
 def _is_compose_runtime_available() -> tuple[bool, str | None]:
@@ -175,8 +175,8 @@ def _is_compose_runtime_available() -> tuple[bool, str | None]:
     try:
         from app.services.music_composer import compose as run_compose  # noqa: F401
         return True, None
-    except Exception as exc:  # noqa: BLE001
-        return False, str(exc)
+    except Exception:  # noqa: BLE001
+        return False, "composer dependencies are not installed"
 
 
 @app.middleware("http")
