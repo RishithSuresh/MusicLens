@@ -11,10 +11,8 @@ python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 # Optional: install AI Music Composer runtime deps for /compose
 # (music21/mido). LLM deps are intentionally not installed by default.
-# MP3 encoding dependency (pydub) is included in requirements.txt.
+# MP3 encoding uses a bundled encoder, so no system ffmpeg install is required.
 pip install -r requirements-composer.txt
-# Optional but recommended for MP3 preview/export support
-winget install Gyan.FFmpeg
 uvicorn app.main:app --reload
 ```
 

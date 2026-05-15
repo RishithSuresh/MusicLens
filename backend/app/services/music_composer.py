@@ -126,115 +126,124 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
     if beats_per_bar <= 0:
         raise ValueError(f"beats_per_bar must be greater than 0, got {beats_per_bar}")
 
-    import io
-    import os
-    import tempfile
-
     try:
         import numpy as np
-        from pydub import AudioSegment
         from scipy.io import wavfile
     except ImportError as e:
         print(
             "Warning: audio synthesis dependencies not available "
             f"({e}). MP3 export disabled. "
-            "Install backend dependencies: pip install -r requirements.txt "
-            "(or the full composer set: pip install -r requirements-composer.txt)"
+            "Install backend dependencies: pip install -r requirements-composer.txt"
         )
         return None
 
     try:
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_temp:
-            wav_path = wav_temp.name
-        try:
-            seconds_per_beat = 60.0 / tempo_bpm
-            total_beats = max(
-                (
-                    note.start_beat + max(note.duration_beats, MIN_NOTE_DURATION_BEATS)
-                    for track in tracks
-                    for note in track.notes
-                ),
-                default=float(beats_per_bar * FALLBACK_BEAT_MULTIPLIER),
-            )
-            duration_sec = max(2.0, total_beats * seconds_per_beat + 0.5)
+        seconds_per_beat = 60.0 / tempo_bpm
+        total_beats = max(
+            (
+                note.start_beat + max(note.duration_beats, MIN_NOTE_DURATION_BEATS)
+                for track in tracks
+                for note in track.notes
+            ),
+            default=float(beats_per_bar * FALLBACK_BEAT_MULTIPLIER),
+        )
+        duration_sec = max(2.0, total_beats * seconds_per_beat + 0.5)
 
-            sample_rate = 44100
-            audio_data = np.zeros(int(duration_sec * sample_rate), dtype=np.float32)
+        sample_rate = 44100
+        audio_data = np.zeros(int(duration_sec * sample_rate), dtype=np.float32)
 
-            def midi_to_freq(midi_note: int) -> float:
-                return 440 * (2 ** ((midi_note - 69) / 12))
+        def midi_to_freq(midi_note: int) -> float:
+            return 440 * (2 ** ((midi_note - 69) / 12))
 
-            for track in tracks:
-                for note in track.notes:
-                    start_sample = max(0, int(note.start_beat * seconds_per_beat * sample_rate))
-                    duration_samples = max(
-                        1,
-                        int(max(note.duration_beats, MIN_NOTE_DURATION_BEATS) * seconds_per_beat * sample_rate),
+        for track in tracks:
+            for note in track.notes:
+                start_sample = max(0, int(note.start_beat * seconds_per_beat * sample_rate))
+                duration_samples = max(
+                    1,
+                    int(max(note.duration_beats, MIN_NOTE_DURATION_BEATS) * seconds_per_beat * sample_rate),
+                )
+                end_sample = min(len(audio_data), start_sample + duration_samples)
+                samples_to_add = end_sample - start_sample
+                if samples_to_add <= 0:
+                    continue
+
+                velocity = max(MIN_VELOCITY_SCALE, min(MAX_VELOCITY_SCALE, note.velocity / 127.0))
+                t = np.arange(samples_to_add) / sample_rate
+
+                if track.is_drum:
+                    drum_pitch_offset = max(
+                        0,
+                        min(DRUM_MIDI_MAX_OFFSET, note.pitch - DRUM_MIDI_BASE_NOTE),
                     )
-                    end_sample = min(len(audio_data), start_sample + duration_samples)
-                    samples_to_add = end_sample - start_sample
-                    if samples_to_add <= 0:
-                        continue
-
-                    velocity = max(MIN_VELOCITY_SCALE, min(MAX_VELOCITY_SCALE, note.velocity / 127.0))
-                    t = np.arange(samples_to_add) / sample_rate
-
-                    if track.is_drum:
-                        drum_pitch_offset = max(
-                            0,
-                            min(DRUM_MIDI_MAX_OFFSET, note.pitch - DRUM_MIDI_BASE_NOTE),
+                    freq = DRUM_BASE_FREQ_HZ + (drum_pitch_offset * DRUM_PITCH_STEP_HZ)
+                    envelope = np.exp(-DRUM_DECAY_RATE * t)
+                    note_data = np.sin(2 * np.pi * freq * t) * envelope * velocity * DRUM_VOLUME_SCALE
+                else:
+                    freq = midi_to_freq(note.pitch)
+                    note_data = np.sin(2 * np.pi * freq * t) * velocity * NOTE_VOLUME_SCALE
+                    if samples_to_add >= 4:
+                        fade = min(
+                            max(MIN_FADE_SAMPLES, int(NOTE_FADE_SECONDS * sample_rate)),
+                            samples_to_add // 2,
                         )
-                        freq = DRUM_BASE_FREQ_HZ + (drum_pitch_offset * DRUM_PITCH_STEP_HZ)
-                        envelope = np.exp(-DRUM_DECAY_RATE * t)
-                        note_data = np.sin(2 * np.pi * freq * t) * envelope * velocity * DRUM_VOLUME_SCALE
-                    else:
-                        freq = midi_to_freq(note.pitch)
-                        note_data = np.sin(2 * np.pi * freq * t) * velocity * NOTE_VOLUME_SCALE
-                        if samples_to_add >= 4:
-                            fade = min(
-                                max(MIN_FADE_SAMPLES, int(NOTE_FADE_SECONDS * sample_rate)),
-                                samples_to_add // 2,
-                            )
-                            note_data[:fade] *= np.linspace(0.0, 1.0, fade)
-                            note_data[-fade:] *= np.linspace(1.0, 0.0, fade)
+                        note_data[:fade] *= np.linspace(0.0, 1.0, fade)
+                        note_data[-fade:] *= np.linspace(1.0, 0.0, fade)
 
-                    audio_data[start_sample:end_sample] += note_data.astype(np.float32)
+                audio_data[start_sample:end_sample] += note_data.astype(np.float32)
 
-            max_val = np.max(np.abs(audio_data))
-            if max_val > 0:
-                audio_data = audio_data / max_val * AUDIO_NORMALIZATION_HEADROOM
-            audio_int = (audio_data * 32767).astype(np.int16)
-            wavfile.write(wav_path, sample_rate, audio_int)
-        except Exception as e:
-            print(f"Warning: Failed to synthesize WAV ({e}).")
-            if os.path.exists(wav_path):
-                os.remove(wav_path)
-            return None
+        max_val = np.max(np.abs(audio_data))
+        if max_val > 0:
+            audio_data = audio_data / max_val * AUDIO_NORMALIZATION_HEADROOM
 
-        # Load WAV and convert to MP3
+        audio_int = (audio_data * 32767).astype(np.int16)
+
         try:
-            audio = AudioSegment.from_wav(wav_path)
-            mp3_buffer = io.BytesIO()
-            audio.export(mp3_buffer, format="mp3", bitrate="192k")
-            mp3_bytes = mp3_buffer.getvalue()
+            import lameenc
+        except ImportError:
+            lameenc = None
 
-            # Verify we got valid MP3 data
-            if len(mp3_bytes) > MIN_MP3_SIZE_BYTES:
-                print(f"Successfully generated MP3: {len(mp3_bytes)} bytes")
-                if os.path.exists(wav_path):
-                    os.remove(wav_path)
-                return mp3_bytes
-            else:
+        if lameenc is not None:
+            try:
+                encoder = lameenc.Encoder()
+                encoder.set_bit_rate(192)
+                encoder.set_in_sample_rate(sample_rate)
+                encoder.set_channels(1)
+                encoder.set_quality(2)
+                mp3_bytes = encoder.encode(audio_int.tobytes()) + encoder.flush()
+                if len(mp3_bytes) > MIN_MP3_SIZE_BYTES:
+                    print(f"Successfully generated MP3: {len(mp3_bytes)} bytes")
+                    return mp3_bytes
                 raise ValueError(
                     "Generated MP3 data too small: "
                     f"{len(mp3_bytes)} bytes (minimum: {MIN_MP3_SIZE_BYTES})"
                 )
+            except Exception as e:
+                print(f"Warning: Failed to encode MP3 with lameenc ({e}).")
 
-        except Exception as e:
-            print(f"Warning: Failed to encode MP3 ({e}).")
+        import io
+        import os
+        import tempfile
+
+        from pydub import AudioSegment
+
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_temp:
+            wav_path = wav_temp.name
+        try:
+            wavfile.write(wav_path, sample_rate, audio_int)
+            audio = AudioSegment.from_wav(wav_path)
+            mp3_buffer = io.BytesIO()
+            audio.export(mp3_buffer, format="mp3", bitrate="192k")
+            mp3_bytes = mp3_buffer.getvalue()
+            if len(mp3_bytes) > MIN_MP3_SIZE_BYTES:
+                print(f"Successfully generated MP3: {len(mp3_bytes)} bytes")
+                return mp3_bytes
+            raise ValueError(
+                "Generated MP3 data too small: "
+                f"{len(mp3_bytes)} bytes (minimum: {MIN_MP3_SIZE_BYTES})"
+            )
+        finally:
             if os.path.exists(wav_path):
                 os.remove(wav_path)
-            return None
 
     except Exception as e:
         print(f"Error in MIDI to MP3 conversion: {e}.")
