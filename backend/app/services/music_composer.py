@@ -39,6 +39,9 @@ NOTE_VOLUME_SCALE = 0.28
 AUDIO_NORMALIZATION_HEADROOM = 0.95
 FALLBACK_BEAT_MULTIPLIER = 2
 MIN_NOTE_DURATION_BEATS = 0.125
+MIN_VELOCITY_SCALE = 0.05
+MAX_VELOCITY_SCALE = 1.0
+MIN_FADE_SAMPLES = 1
 
 
 def _to_response_track(track: TrackData) -> CompositionTrack:
@@ -146,14 +149,13 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
             from scipy.io import wavfile
 
             seconds_per_beat = 60.0 / tempo_bpm
-            fallback_total_beats = float(beats_per_bar * FALLBACK_BEAT_MULTIPLIER)
             total_beats = max(
                 (
                     note.start_beat + max(note.duration_beats, MIN_NOTE_DURATION_BEATS)
                     for track in tracks
                     for note in track.notes
                 ),
-                default=fallback_total_beats,
+                default=float(beats_per_bar * FALLBACK_BEAT_MULTIPLIER),
             )
             duration_sec = max(2.0, total_beats * seconds_per_beat + 0.5)
 
@@ -175,7 +177,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                     if samples_to_add <= 0:
                         continue
 
-                    velocity = max(0.05, min(1.0, note.velocity / 127.0))
+                    velocity = max(MIN_VELOCITY_SCALE, min(MAX_VELOCITY_SCALE, note.velocity / 127.0))
                     t = np.arange(samples_to_add) / sample_rate
 
                     if track.is_drum:
@@ -191,7 +193,7 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
                         note_data = np.sin(2 * np.pi * freq * t) * velocity * NOTE_VOLUME_SCALE
                         if samples_to_add >= 4:
                             fade = min(
-                                max(1, int(NOTE_FADE_SECONDS * sample_rate)),
+                                max(MIN_FADE_SAMPLES, int(NOTE_FADE_SECONDS * sample_rate)),
                                 samples_to_add // 2,
                             )
                             note_data[:fade] *= np.linspace(0.0, 1.0, fade)
