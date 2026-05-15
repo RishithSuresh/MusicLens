@@ -6,9 +6,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
 class AnimatedBackground extends StatefulWidget {
-  const AnimatedBackground({required this.child, super.key});
+  const AnimatedBackground({
+    required this.child,
+    this.useHomePalette = true,
+    super.key,
+  });
 
   final Widget child;
+  final bool useHomePalette;
 
   @override
   State<AnimatedBackground> createState() => _AnimatedBackgroundState();
@@ -42,6 +47,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
         final wave1 = math.sin(_controller.value * math.pi * 2);
         final wave2 = math.cos(_controller.value * math.pi * 2 + math.pi / 3);
         final wave3 = math.sin(_controller.value * math.pi * 2 + math.pi * 2 / 3);
+        final lightPalette = widget.useHomePalette;
 
         return Container(
           decoration: BoxDecoration(
@@ -49,10 +55,10 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppTheme.cocoaBrown,
-                AppTheme.buccaneer,
-                AppTheme.capePalliser,
-                AppTheme.buccaneer,
+                lightPalette ? AppTheme.ivory : AppTheme.cocoaBrown,
+                lightPalette ? AppTheme.paper : AppTheme.buccaneer,
+                lightPalette ? AppTheme.tan.withValues(alpha: 0.86) : AppTheme.capePalliser,
+                lightPalette ? AppTheme.antiqueBrass.withValues(alpha: 0.72) : AppTheme.buccaneer,
               ],
               stops: [0.0, 0.33, 0.66, 1.0],
             ),
@@ -61,20 +67,20 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
             children: [
               // Enhanced blob system with multiple layers
               _AnimatedBlob(
-                color: AppTheme.tan,
+                color: lightPalette ? AppTheme.antiqueBrass : AppTheme.tan,
                 left: 40 + (40 * wave1),
                 top: 60,
                 size: 280,
                 blur: 42,
-                opacity: 0.20,
+                opacity: lightPalette ? 0.16 : 0.20,
               ),
               _AnimatedBlob(
-                color: AppTheme.antiqueBrass,
+                color: lightPalette ? AppTheme.tan : AppTheme.antiqueBrass,
                 left: 380 + (50 * wave2),
                 top: 180 + (30 * wave1),
                 size: 320,
                 blur: 46,
-                opacity: 0.18,
+                opacity: lightPalette ? 0.14 : 0.18,
               ),
               _AnimatedBlob(
                 color: AppTheme.capePalliser,
@@ -82,7 +88,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                 top: 520 - (40 * wave2),
                 size: 260,
                 blur: 40,
-                opacity: 0.16,
+                opacity: lightPalette ? 0.12 : 0.16,
               ),
               _AnimatedBlob(
                 color: AppTheme.buccaneer,
@@ -90,7 +96,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                 top: 400 + (25 * wave3),
                 size: 240,
                 blur: 38,
-                opacity: 0.14,
+                opacity: lightPalette ? 0.08 : 0.14,
               ),
               // Wave pattern overlay
               Positioned.fill(
@@ -99,13 +105,17 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                     progress: _controller.value,
                     wave1: wave1,
                     wave2: wave2,
+                    useHomePalette: lightPalette,
                   ),
                 ),
               ),
               // Mesh grid overlay
               Positioned.fill(
                 child: CustomPaint(
-                  painter: _MeshGridPainter(progress: _controller.value),
+                  painter: _MeshGridPainter(
+                    progress: _controller.value,
+                    useHomePalette: lightPalette,
+                  ),
                 ),
               ),
               if (child != null) child,
@@ -165,23 +175,26 @@ class _EnhancedWavePatternPainter extends CustomPainter {
     required this.progress,
     required this.wave1,
     required this.wave2,
+    required this.useHomePalette,
   });
 
   final double progress;
   final double wave1;
   final double wave2;
+  final bool useHomePalette;
 
   @override
   void paint(Canvas canvas, Size size) {
     // Primary wave pattern
     final paint1 = Paint()
-      ..color = AppTheme.tan.withValues(alpha: 0.1)
+      ..color = (useHomePalette ? AppTheme.buccaneer : AppTheme.tan).withValues(alpha: useHomePalette ? 0.08 : 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
     // Secondary wave pattern
     final paint2 = Paint()
-      ..color = AppTheme.antiqueBrass.withValues(alpha: 0.08)
+      ..color = (useHomePalette ? AppTheme.capePalliser : AppTheme.antiqueBrass)
+          .withValues(alpha: useHomePalette ? 0.07 : 0.08)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
@@ -221,19 +234,25 @@ class _EnhancedWavePatternPainter extends CustomPainter {
   bool shouldRepaint(covariant _EnhancedWavePatternPainter oldDelegate) {
     return oldDelegate.progress != progress ||
         oldDelegate.wave1 != wave1 ||
-        oldDelegate.wave2 != wave2;
+        oldDelegate.wave2 != wave2 ||
+        oldDelegate.useHomePalette != useHomePalette;
   }
 }
 
 class _MeshGridPainter extends CustomPainter {
-  _MeshGridPainter({required this.progress});
+  _MeshGridPainter({
+    required this.progress,
+    required this.useHomePalette,
+  });
 
   final double progress;
+  final bool useHomePalette;
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppTheme.tan.withValues(alpha: 0.06)
+      ..color = (useHomePalette ? AppTheme.buccaneer : AppTheme.tan)
+          .withValues(alpha: useHomePalette ? 0.045 : 0.06)
       ..strokeWidth = 0.8;
 
     const gridSize = 120.0;
@@ -260,6 +279,7 @@ class _MeshGridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _MeshGridPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.useHomePalette != useHomePalette;
   }
 }

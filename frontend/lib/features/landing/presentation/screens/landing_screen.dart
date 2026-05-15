@@ -8,8 +8,26 @@ class LandingScreen extends StatelessWidget {
 
   void _openStudio(BuildContext context, {int initialTabIndex = 0}) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => HomeShell(initialTabIndex: initialTabIndex),
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 460),
+        reverseTransitionDuration: const Duration(milliseconds: 340),
+        pageBuilder: (_, animation, __) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+            reverseCurve: Curves.easeInCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.04, 0.0),
+                end: Offset.zero,
+              ).animate(curved),
+              child: HomeShell(initialTabIndex: initialTabIndex),
+            ),
+          );
+        },
       ),
     );
   }
@@ -50,7 +68,6 @@ class LandingScreen extends StatelessWidget {
                   onAnalyze: () => _openStudio(context),
                   onCompose: () => _openStudio(context, initialTabIndex: 1),
                   onContact: () => _showContact(context),
-                  onBookDemo: () => _showContact(context),
                 ),
               ),
             ),
@@ -69,7 +86,6 @@ class _HeroPanel extends StatelessWidget {
     required this.onAnalyze,
     required this.onCompose,
     required this.onContact,
-    required this.onBookDemo,
   });
 
   final VoidCallback onLaunchAnalyze;
@@ -78,7 +94,6 @@ class _HeroPanel extends StatelessWidget {
   final VoidCallback onAnalyze;
   final VoidCallback onCompose;
   final VoidCallback onContact;
-  final VoidCallback onBookDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -110,33 +125,12 @@ class _HeroPanel extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: isWide
-                    ? Row(
-                        children: [
-                          Expanded(
-                            child: _HeroCopy(
-                              theme: theme,
-                              onLaunchAnalyze: onLaunchAnalyze,
-                              onLaunchCompose: onLaunchCompose,
-                            ),
-                          ),
-                          Expanded(child: const _HeroArt()),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          Expanded(
-                            child: _HeroCopy(
-                              theme: theme,
-                              onLaunchAnalyze: onLaunchAnalyze,
-                              onLaunchCompose: onLaunchCompose,
-                            ),
-                          ),
-                          SizedBox(height: 270, child: const _HeroArt()),
-                        ],
-                      ),
+                child: _HeroCopy(
+                  theme: theme,
+                  onLaunchAnalyze: onLaunchAnalyze,
+                  onLaunchCompose: onLaunchCompose,
+                ),
               ),
-              _PromoStrip(onBookDemo: onBookDemo),
             ],
           ),
         );
@@ -252,7 +246,7 @@ class _HeroCopy extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(26, 10, 26, 16),
+      padding: const EdgeInsets.fromLTRB(26, 24, 26, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -310,212 +304,6 @@ class _HeroCopy extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _HeroArt extends StatelessWidget {
-  const _HeroArt();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(0, 0, 10, 10),
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(36),
-          topRight: Radius.circular(28),
-          bottomLeft: Radius.circular(70),
-          bottomRight: Radius.circular(28),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFFFC03B), Color(0xFFFFA615)],
-        ),
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -42,
-            top: -42,
-            child: Container(
-              width: 170,
-              height: 170,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.14),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 30,
-            top: 32,
-            child: Container(
-              width: 95,
-              height: 95,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.buccaneer,
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.album_rounded,
-                  size: 54,
-                  color: AppTheme.paper,
-                ),
-              ),
-            ),
-          ),
-          const Positioned(
-            top: 56,
-            right: 28,
-            child: Icon(
-              Icons.headphones_rounded,
-              size: 70,
-              color: AppTheme.cocoaBrown,
-            ),
-          ),
-          Positioned(
-            left: 30,
-            right: 30,
-            bottom: 26,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.graphic_eq_rounded, color: AppTheme.cocoaBrown),
-                  SizedBox(width: 10),
-                  Text(
-                    'Real-time waveform • beat sync • AI composition',
-                    style: TextStyle(
-                      color: AppTheme.cocoaBrown,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PromoStrip extends StatelessWidget {
-  const _PromoStrip({required this.onBookDemo});
-
-  final VoidCallback onBookDemo;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF6D37D),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        runAlignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          const _OfferTile(
-            title: '20% OFF',
-            subtitle: 'Early access for first 100 creators',
-            emphasis: true,
-          ),
-          const _OfferTile(
-            title: 'Analyze',
-            subtitle: 'Upload songs and unlock musical DNA',
-          ),
-          const _OfferTile(
-            title: 'Compose',
-            subtitle: 'Generate melody ideas from plain language',
-          ),
-          _OfferTile(
-            title: 'Book Demo',
-            subtitle: 'See MusicLens live with guided setup',
-            action: true,
-            onTap: onBookDemo,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OfferTile extends StatelessWidget {
-  const _OfferTile({
-    required this.title,
-    required this.subtitle,
-    this.emphasis = false,
-    this.action = false,
-    this.onTap,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool emphasis;
-  final bool action;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 210, maxWidth: 290),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            if (emphasis)
-              const Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Icon(Icons.local_offer_rounded, color: AppTheme.cocoaBrown),
-              ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: AppTheme.cocoaBrown,
-                      fontWeight: FontWeight.w900,
-                      fontSize: emphasis ? 28 : 18,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: AppTheme.buccaneer,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (action)
-              const Padding(
-                padding: EdgeInsets.only(left: 8),
-                child: Icon(Icons.arrow_forward_rounded, color: AppTheme.cocoaBrown),
-              ),
-          ],
-        ),
       ),
     );
   }
