@@ -4,14 +4,11 @@
 # music21 is required to render MIDI output.
 # mido is required for MIDI parsing during audio synthesis.
 # pydub is required for MP3 encoding.
-# langgraph + langchain-openai are only used when an OPENAI_API_KEY is set;
-# if they are missing the compositor falls back to a deterministic procedural
-# engine (no LLM required).
+# The compositor always works without LangGraph/LangChain by using the
+# deterministic procedural engine. Install LLM packages separately only after
+# security review if you need OPENAI_API_KEY-powered prompt interpretation.
 music21==9.1.0
 mido==1.3.3
 pydub==0.25.1
-langgraph==0.2.50
-langchain-openai==0.2.10
-langchain-core==0.3.20
 python-dotenv==1.0.1
 requests==2.32.3

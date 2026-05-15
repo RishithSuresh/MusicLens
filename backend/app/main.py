@@ -1,5 +1,6 @@
 import hashlib
 import random
+from collections.abc import Callable
 from collections import OrderedDict
 from threading import Lock
 
@@ -8,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.analysis import AnalysisResponse
 from app.models.composition import CompositionRequest, CompositionResponse, RandomPromptResponse
-from app.services.audio_analysis import analyze_audio_bytes
 
 app = FastAPI(title="MusicLens API", version="0.1.0")
 
@@ -17,6 +17,9 @@ ANALYSIS_CACHE_MAX_ITEMS = 24
 
 _analysis_cache: OrderedDict[str, AnalysisResponse] = OrderedDict()
 _analysis_cache_lock = Lock()
+_analyze_audio_bytes: Callable[[bytes], AnalysisResponse] | None = None
+_analyze_audio_import_error: ImportError | None = None
+_analyze_audio_import_lock = Lock()
 
 app.add_middleware(
     CORSMiddleware,
@@ -97,6 +100,31 @@ def _cache_set(cache_key: str, response: AnalysisResponse) -> None:
             _analysis_cache.popitem(last=False)
 
 
+def _get_analyze_audio_bytes() -> Callable[[bytes], AnalysisResponse]:
+    global _analyze_audio_bytes
+    global _analyze_audio_import_error
+
+    if _analyze_audio_bytes is not None:
+        return _analyze_audio_bytes
+    if _analyze_audio_import_error is not None:
+        raise _analyze_audio_import_error
+
+    with _analyze_audio_import_lock:
+        if _analyze_audio_bytes is not None:
+            return _analyze_audio_bytes
+        if _analyze_audio_import_error is not None:
+            raise _analyze_audio_import_error
+
+        try:
+            from app.services.audio_analysis import analyze_audio_bytes
+        except ImportError as exc:
+            _analyze_audio_import_error = exc
+            raise
+
+        _analyze_audio_bytes = analyze_audio_bytes
+        return analyze_audio_bytes
+
+
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
     file_name = (file.filename or "").lower()
@@ -114,6 +142,17 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
+
+    try:
+        analyze_audio_bytes = _get_analyze_audio_bytes()
+    except ImportError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Audio analysis dependencies are not available. "
+                "Run: pip install -r backend/requirements.txt for /analyze support"
+            ),
+        ) from exc
 
     try:
         response = analyze_audio_bytes(audio_bytes)
