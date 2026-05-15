@@ -14,3 +14,4 @@ langgraph==0.2.50
 langchain-openai==0.2.10
 langchain-core==0.3.20
 python-dotenv==1.0.1
+requests==2.32.3

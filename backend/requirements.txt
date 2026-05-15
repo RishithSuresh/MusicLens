@@ -6,3 +6,4 @@ numpy==2.2.6
 scipy==1.15.3
 soundfile==0.13.1
 pydub==0.25.1
+requests==2.32.3

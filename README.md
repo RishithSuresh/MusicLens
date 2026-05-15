@@ -95,6 +95,7 @@ MusicLens/
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 # Optional: install lyrics transcription engine
 pip install -r requirements-lyrics.txt
@@ -103,6 +104,8 @@ pip install -r requirements-lyrics.txt
 # when OPENAI_API_KEY is set, otherwise the deterministic procedural
 # engine is used as a fallback.
 pip install -r requirements-composer.txt
+# Optional but recommended for MP3 preview/export support
+winget install Gyan.FFmpeg
 uvicorn app.main:app --reload
 ```
 
