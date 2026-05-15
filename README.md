@@ -99,10 +99,9 @@ python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 # Optional: install lyrics transcription engine
 pip install -r requirements-lyrics.txt
-# Optional: install AI Music Compositor dependencies (music21 + LangGraph).
-# The /compose endpoint requires music21; the LangGraph path is only used
-# when OPENAI_API_KEY is set, otherwise the deterministic procedural
-# engine is used as a fallback.
+# Optional: install AI Music Compositor runtime dependencies (music21/mido).
+# The /compose endpoint works without LangGraph/LangChain and falls back to
+# the deterministic procedural engine when LLM dependencies are absent.
 pip install -r requirements-composer.txt
 # Optional but recommended for MP3 preview/export support
 winget install Gyan.FFmpeg

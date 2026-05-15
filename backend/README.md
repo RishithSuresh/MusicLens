@@ -9,8 +9,9 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-# Optional: install full AI Music Composer stack for /compose
-# (music21/mido/LangGraph). MP3 encoding dependency (pydub) is included in requirements.txt.
+# Optional: install AI Music Composer runtime deps for /compose
+# (music21/mido). LLM deps are intentionally not installed by default.
+# MP3 encoding dependency (pydub) is included in requirements.txt.
 pip install -r requirements-composer.txt
 # Optional but recommended for MP3 preview/export support
 winget install Gyan.FFmpeg
