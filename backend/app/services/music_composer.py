@@ -109,6 +109,8 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
     """
     if tempo_bpm <= 0:
         raise ValueError(f"tempo_bpm must be greater than 0, got {tempo_bpm}")
+    if beats_per_bar <= 0:
+        raise ValueError(f"beats_per_bar must be greater than 0, got {beats_per_bar}")
 
     import io
     import os
@@ -126,7 +128,6 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
         return None
 
     try:
-        _ = beats_per_bar  # kept for API compatibility
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_temp:
             wav_path = wav_temp.name
         try:
@@ -134,13 +135,14 @@ def _render_to_mp3(tracks: list[TrackData], tempo_bpm: int, beats_per_bar: int) 
             from scipy.io import wavfile
 
             seconds_per_beat = 60.0 / tempo_bpm
+            fallback_total_beats = float(beats_per_bar * 2)
             total_beats = max(
                 (
                     note.start_beat + max(note.duration_beats, 0.125)
                     for track in tracks
                     for note in track.notes
                 ),
-                default=8.0,
+                default=fallback_total_beats,
             )
             duration_sec = max(2.0, total_beats * seconds_per_beat + 0.5)
 
