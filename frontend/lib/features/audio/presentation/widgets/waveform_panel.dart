@@ -232,8 +232,8 @@ class _WaveformPainter extends CustomPainter {
       return;
     }
 
-    final energyDivisor = (energy.length - 1).clamp(1, energy.length);
-    final pitchDivisor = (pitch.length - 1).clamp(1, pitch.length);
+    final energyDivisor = math.max(1, energy.length - 1).toDouble();
+    final pitchDivisor = math.max(1, pitch.length - 1).toDouble();
 
     final accent = Color.lerp(
       AppTheme.antiqueBrass,
