@@ -238,6 +238,8 @@ class _WaveformPainter extends CustomPainter {
 
     final energyDivisor = math.max(1, energy.length - 1).toDouble();
     final pitchDivisor = math.max(1, pitch.length - 1).toDouble();
+    final isSingleEnergySample = energy.length == 1;
+    final isSinglePitchSample = pitch.length == 1;
 
     final accent = Color.lerp(
       AppTheme.antiqueBrass,
@@ -274,7 +276,7 @@ class _WaveformPainter extends CustomPainter {
     final centerY = size.height * 0.58;
 
     for (int i = 0; i < energy.length; i++) {
-      final x = i / energyDivisor * size.width;
+      final x = isSingleEnergySample ? size.width * 0.5 : i / energyDivisor * size.width;
       final amp = (energy[i].clamp(0, 1) as double) * (size.height * 0.42);
       final y = centerY - amp;
 
@@ -306,7 +308,7 @@ class _WaveformPainter extends CustomPainter {
 
     final pitchPath = Path();
     for (int i = 0; i < pitch.length; i++) {
-      final x = i / pitchDivisor * size.width;
+      final x = isSinglePitchSample ? size.width * 0.5 : i / pitchDivisor * size.width;
       final normalized = ((pitch[i] - minPitch) / pitchRange).clamp(0.0, 1.0);
       final y = size.height * 0.86 - (normalized * (size.height * 0.36));
       if (i == 0) {
