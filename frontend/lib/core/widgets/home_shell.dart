@@ -9,7 +9,12 @@ import '../../features/composer/presentation/screens/composer_screen.dart';
 ///   * Analyze - existing audio analysis dashboard
 ///   * Compose - AI Music Compositor (LangGraph + procedural engine)
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({
+    super.key,
+    this.initialTabIndex = 0,
+  });
+
+  final int initialTabIndex;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -17,12 +22,14 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  int _index = 0;
+  late int _index;
 
   @override
   void initState() {
     super.initState();
+    _index = widget.initialTabIndex.clamp(0, 1).toInt();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.index = _index;
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() => _index = _tabController.index);

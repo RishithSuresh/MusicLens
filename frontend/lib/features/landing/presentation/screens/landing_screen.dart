@@ -6,6 +6,22 @@ import '../../../../core/widgets/home_shell.dart';
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
 
+  void _openStudio(BuildContext context, {int initialTabIndex = 0}) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => HomeShell(initialTabIndex: initialTabIndex),
+      ),
+    );
+  }
+
+  void _showContact(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Contact us at team.musiclens@gmail.com'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,13 +40,17 @@ class LandingScreen extends StatelessWidget {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1200),
                 child: _HeroPanel(
-                  onLaunch: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const HomeShell(),
-                      ),
+                  onLaunchAnalyze: () => _openStudio(context),
+                  onLaunchCompose: () => _openStudio(context, initialTabIndex: 1),
+                  onHome: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('You are on the MusicLens home page.')),
                     );
                   },
+                  onAnalyze: () => _openStudio(context),
+                  onCompose: () => _openStudio(context, initialTabIndex: 1),
+                  onContact: () => _showContact(context),
+                  onBookDemo: () => _showContact(context),
                 ),
               ),
             ),
@@ -42,9 +62,23 @@ class LandingScreen extends StatelessWidget {
 }
 
 class _HeroPanel extends StatelessWidget {
-  const _HeroPanel({required this.onLaunch});
+  const _HeroPanel({
+    required this.onLaunchAnalyze,
+    required this.onLaunchCompose,
+    required this.onHome,
+    required this.onAnalyze,
+    required this.onCompose,
+    required this.onContact,
+    required this.onBookDemo,
+  });
 
-  final VoidCallback onLaunch;
+  final VoidCallback onLaunchAnalyze;
+  final VoidCallback onLaunchCompose;
+  final VoidCallback onHome;
+  final VoidCallback onAnalyze;
+  final VoidCallback onCompose;
+  final VoidCallback onContact;
+  final VoidCallback onBookDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -68,24 +102,41 @@ class _HeroPanel extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-                child: const _TopNav(),
+                child: _TopNav(
+                  onHome: onHome,
+                  onAnalyze: onAnalyze,
+                  onCompose: onCompose,
+                  onContact: onContact,
+                ),
               ),
               Expanded(
                 child: isWide
                     ? Row(
                         children: [
-                          Expanded(child: _HeroCopy(theme: theme, onLaunch: onLaunch)),
+                          Expanded(
+                            child: _HeroCopy(
+                              theme: theme,
+                              onLaunchAnalyze: onLaunchAnalyze,
+                              onLaunchCompose: onLaunchCompose,
+                            ),
+                          ),
                           Expanded(child: const _HeroArt()),
                         ],
                       )
                     : Column(
                         children: [
-                          Expanded(child: _HeroCopy(theme: theme, onLaunch: onLaunch)),
+                          Expanded(
+                            child: _HeroCopy(
+                              theme: theme,
+                              onLaunchAnalyze: onLaunchAnalyze,
+                              onLaunchCompose: onLaunchCompose,
+                            ),
+                          ),
                           SizedBox(height: 270, child: const _HeroArt()),
                         ],
                       ),
               ),
-              const _PromoStrip(),
+              _PromoStrip(onBookDemo: onBookDemo),
             ],
           ),
         );
@@ -95,7 +146,17 @@ class _HeroPanel extends StatelessWidget {
 }
 
 class _TopNav extends StatelessWidget {
-  const _TopNav();
+  const _TopNav({
+    required this.onHome,
+    required this.onAnalyze,
+    required this.onCompose,
+    required this.onContact,
+  });
+
+  final VoidCallback onHome;
+  final VoidCallback onAnalyze;
+  final VoidCallback onCompose;
+  final VoidCallback onContact;
 
   @override
   Widget build(BuildContext context) {
@@ -132,13 +193,13 @@ class _TopNav extends StatelessWidget {
             color: AppTheme.ivory,
             borderRadius: BorderRadius.circular(999),
           ),
-          child: const Wrap(
+          child: Wrap(
             spacing: 8,
             children: [
-              _NavChip(label: 'Home'),
-              _NavChip(label: 'Analyze'),
-              _NavChip(label: 'Compose'),
-              _NavChip(label: 'Contact'),
+              _NavChip(label: 'Home', onTap: onHome),
+              _NavChip(label: 'Analyze', onTap: onAnalyze),
+              _NavChip(label: 'Compose', onTap: onCompose),
+              _NavChip(label: 'Contact', onTap: onContact),
             ],
           ),
         ),
@@ -148,24 +209,29 @@ class _TopNav extends StatelessWidget {
 }
 
 class _NavChip extends StatelessWidget {
-  const _NavChip({required this.label});
+  const _NavChip({required this.label, required this.onTap});
 
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.tan.withValues(alpha: 0.26),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: AppTheme.buccaneer,
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.tan.withValues(alpha: 0.26),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: AppTheme.buccaneer,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
         ),
       ),
     );
@@ -173,10 +239,15 @@ class _NavChip extends StatelessWidget {
 }
 
 class _HeroCopy extends StatelessWidget {
-  const _HeroCopy({required this.theme, required this.onLaunch});
+  const _HeroCopy({
+    required this.theme,
+    required this.onLaunchAnalyze,
+    required this.onLaunchCompose,
+  });
 
   final ThemeData theme;
-  final VoidCallback onLaunch;
+  final VoidCallback onLaunchAnalyze;
+  final VoidCallback onLaunchCompose;
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +288,7 @@ class _HeroCopy extends StatelessWidget {
             runSpacing: 8,
             children: [
               FilledButton.icon(
-                onPressed: onLaunch,
+                onPressed: onLaunchAnalyze,
                 icon: const Icon(Icons.play_circle_fill_rounded),
                 label: const Text('Launch Studio'),
                 style: FilledButton.styleFrom(
@@ -227,7 +298,7 @@ class _HeroCopy extends StatelessWidget {
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: onLaunch,
+                onPressed: onLaunchCompose,
                 icon: const Icon(Icons.auto_awesome_rounded),
                 label: const Text('Try Composer'),
                 style: OutlinedButton.styleFrom(
@@ -338,7 +409,9 @@ class _HeroArt extends StatelessWidget {
 }
 
 class _PromoStrip extends StatelessWidget {
-  const _PromoStrip();
+  const _PromoStrip({required this.onBookDemo});
+
+  final VoidCallback onBookDemo;
 
   @override
   Widget build(BuildContext context) {
@@ -354,17 +427,17 @@ class _PromoStrip extends StatelessWidget {
         alignment: WrapAlignment.spaceBetween,
         runAlignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
-        children: const [
-          _OfferTile(
+        children: [
+          const _OfferTile(
             title: '20% OFF',
             subtitle: 'Early access for first 100 creators',
             emphasis: true,
           ),
-          _OfferTile(
+          const _OfferTile(
             title: 'Analyze',
             subtitle: 'Upload songs and unlock musical DNA',
           ),
-          _OfferTile(
+          const _OfferTile(
             title: 'Compose',
             subtitle: 'Generate melody ideas from plain language',
           ),
@@ -372,6 +445,7 @@ class _PromoStrip extends StatelessWidget {
             title: 'Book Demo',
             subtitle: 'See MusicLens live with guided setup',
             action: true,
+            onTap: onBookDemo,
           ),
         ],
       ),
@@ -385,57 +459,63 @@ class _OfferTile extends StatelessWidget {
     required this.subtitle,
     this.emphasis = false,
     this.action = false,
+    this.onTap,
   });
 
   final String title;
   final String subtitle;
   final bool emphasis;
   final bool action;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 210, maxWidth: 290),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          if (emphasis)
-            const Padding(
-              padding: EdgeInsets.only(right: 10),
-              child: Icon(Icons.local_offer_rounded, color: AppTheme.cocoaBrown),
-            ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: AppTheme.cocoaBrown,
-                    fontWeight: FontWeight.w900,
-                    fontSize: emphasis ? 28 : 18,
-                    letterSpacing: -0.4,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 210, maxWidth: 290),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            if (emphasis)
+              const Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: Icon(Icons.local_offer_rounded, color: AppTheme.cocoaBrown),
+              ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: AppTheme.cocoaBrown,
+                      fontWeight: FontWeight.w900,
+                      fontSize: emphasis ? 28 : 18,
+                      letterSpacing: -0.4,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppTheme.buccaneer,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppTheme.buccaneer,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (action)
-            const Padding(
-              padding: EdgeInsets.only(left: 8),
-              child: Icon(Icons.arrow_forward_rounded, color: AppTheme.cocoaBrown),
-            ),
-        ],
+            if (action)
+              const Padding(
+                padding: EdgeInsets.only(left: 8),
+                child: Icon(Icons.arrow_forward_rounded, color: AppTheme.cocoaBrown),
+              ),
+          ],
+        ),
       ),
     );
   }
