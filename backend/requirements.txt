@@ -7,3 +7,5 @@ scipy==1.15.3
 soundfile==0.13.1
 pydub==0.25.1
 requests==2.32.3
+pytest==8.3.5
+httpx==0.28.1
