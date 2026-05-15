@@ -116,12 +116,12 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
 
     try:
         from app.services.audio_analysis import analyze_audio_bytes
-    except Exception as exc:  # noqa: BLE001
+    except (ImportError, ModuleNotFoundError) as exc:
         raise HTTPException(
             status_code=503,
             detail=(
                 "Audio analysis dependencies are not available. "
-                "Run: pip install -r requirements.txt"
+                "Run: pip install -r backend/requirements.txt"
             ),
         ) from exc
 
