@@ -18,7 +18,7 @@ ANALYSIS_CACHE_MAX_ITEMS = 24
 _analysis_cache: OrderedDict[str, AnalysisResponse] = OrderedDict()
 _analysis_cache_lock = Lock()
 _analyze_audio_bytes: Callable[[bytes], AnalysisResponse] | None = None
-_analyze_audio_import_error: Exception | None = None
+_analyze_audio_import_error: ImportError | None = None
 _analyze_audio_import_lock = Lock()
 
 app.add_middleware(
@@ -150,7 +150,7 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
             status_code=503,
             detail=(
                 "Audio analysis dependencies are not available. "
-                "Run: pip install -r backend/requirements.txt"
+                "Run: pip install -r backend/requirements.txt for /analyze support"
             ),
         ) from exc
 
