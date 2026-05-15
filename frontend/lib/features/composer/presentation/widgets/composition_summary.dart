@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import '../../data/composition_models.dart';
 
@@ -27,7 +28,7 @@ class CompositionSummary extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.queue_music_rounded, color: Color(0xFF3B82F6)),
+              const Icon(Icons.queue_music_rounded, color: AppTheme.tan),
               const SizedBox(width: 8),
               Text(
                 'Composition Summary',
@@ -36,7 +37,7 @@ class CompositionSummary extends StatelessWidget {
               const Spacer(),
               _badge(
                 usedLlm ? 'LLM' : 'Procedural',
-                usedLlm ? const Color(0xFF8B5CF6) : const Color(0xFF06B6D4),
+                usedLlm ? AppTheme.antiqueBrass : AppTheme.capePalliser,
               ),
             ],
           ),
@@ -59,7 +60,7 @@ class CompositionSummary extends StatelessWidget {
             'Chord progression',
             style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF334155),
+               color: AppTheme.tan,
               letterSpacing: 0.4,
             ),
           ),
@@ -68,14 +69,14 @@ class CompositionSummary extends StatelessWidget {
             metadata.chordProgression.isEmpty
                 ? '—'
                 : metadata.chordProgression.take(12).join('  ·  '),
-            style: const TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w600),
+            style: const TextStyle(color: AppTheme.paper, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           Text(
             'Instruments',
             style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF334155),
+               color: AppTheme.tan,
               letterSpacing: 0.4,
             ),
           ),
@@ -94,22 +95,22 @@ class CompositionSummary extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF3B82F6).withValues(alpha: 0.07),
-                  const Color(0xFF8B5CF6).withValues(alpha: 0.07),
+                  AppTheme.antiqueBrass.withValues(alpha: 0.18),
+                  AppTheme.capePalliser.withValues(alpha: 0.2),
                 ],
               ),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppTheme.tan.withValues(alpha: 0.35)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF8B5CF6)),
+                const Icon(Icons.auto_awesome_rounded, size: 16, color: AppTheme.tan),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     narrative,
                     style: const TextStyle(
-                      color: Color(0xFF1E293B),
+                      color: AppTheme.paper,
                       fontWeight: FontWeight.w500,
                       height: 1.45,
                     ),
@@ -142,13 +143,13 @@ class CompositionSummary extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: AppTheme.buccaneer.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        border: Border.all(color: AppTheme.tan.withValues(alpha: 0.35), width: 1),
       ),
       child: Text(
         label.isEmpty ? value : '$label · $value',
-        style: const TextStyle(color: Color(0xFF334155), fontWeight: FontWeight.w600, fontSize: 12),
+        style: const TextStyle(color: AppTheme.paper, fontWeight: FontWeight.w600, fontSize: 12),
       ),
     );
   }

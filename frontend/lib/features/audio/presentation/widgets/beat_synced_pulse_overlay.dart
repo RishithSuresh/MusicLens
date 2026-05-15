@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
+
 class BeatSyncedPulseOverlay extends StatelessWidget {
   const BeatSyncedPulseOverlay({
     required this.currentTime,
@@ -144,9 +146,9 @@ class _PulsePainter extends CustomPainter {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: [
-          const Color(0xFF0EA5E9).withValues(alpha: 0.03 + (0.08 * strength)),
-          const Color(0xFF2563EB).withValues(alpha: 0.02 + (0.07 * strength)),
-          const Color(0xFF38BDF8).withValues(alpha: 0.02 + (0.05 * strength)),
+          AppTheme.buccaneer.withValues(alpha: 0.05 + (0.12 * strength)),
+          AppTheme.capePalliser.withValues(alpha: 0.04 + (0.1 * strength)),
+          AppTheme.antiqueBrass.withValues(alpha: 0.02 + (0.06 * strength)),
         ],
       ).createShader(Offset.zero & size);
 
@@ -156,8 +158,8 @@ class _PulsePainter extends CustomPainter {
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFF7DD3FC).withValues(alpha: 0.08 + (0.23 * strength)),
-          const Color(0xFF2563EB).withValues(alpha: 0.03 + (0.16 * strength)),
+          AppTheme.tan.withValues(alpha: 0.08 + (0.23 * strength)),
+          AppTheme.capePalliser.withValues(alpha: 0.03 + (0.16 * strength)),
           Colors.transparent,
         ],
         stops: const [0.0, 0.56, 1.0],
@@ -173,7 +175,7 @@ class _PulsePainter extends CustomPainter {
       final ringPaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5 + ((1 - localPhase) * 3.4 * strength)
-        ..color = const Color(0xFFBAE6FD).withValues(alpha: alpha.clamp(0.0, 1.0));
+        ..color = AppTheme.tan.withValues(alpha: alpha.clamp(0.0, 1.0));
 
       canvas.drawCircle(center, radius, ringPaint);
     }
@@ -181,7 +183,7 @@ class _PulsePainter extends CustomPainter {
     final flashPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.2 + (2.2 * strength)
-      ..color = const Color(0xFF38BDF8).withValues(alpha: (0.04 + (0.12 * strength)).clamp(0.0, 1.0));
+      ..color = AppTheme.antiqueBrass.withValues(alpha: (0.04 + (0.12 * strength)).clamp(0.0, 1.0));
 
     final horizontalInset = size.width * 0.16;
     final verticalInset = size.height * 0.18;

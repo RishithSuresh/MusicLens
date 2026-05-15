@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
+
 class ReactiveParticleField extends StatefulWidget {
   const ReactiveParticleField({
     required this.intensity,
@@ -72,8 +74,8 @@ class _ParticlePainter extends CustomPainter {
       final radius = 1.2 + (intensity * 2.6) + ((i % 3) * 0.35);
 
       final color = Color.lerp(
-        const Color(0xFF3B82F6).withValues(alpha: 0.14),
-        const Color(0xFFEC4899).withValues(alpha: 0.24),
+        AppTheme.antiqueBrass.withValues(alpha: 0.14),
+        AppTheme.tan.withValues(alpha: 0.24),
         (i % 10) / 10,
       )!;
 

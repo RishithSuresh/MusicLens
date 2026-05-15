@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 
 class SpectrumPanel extends StatelessWidget {
@@ -24,8 +25,8 @@ class SpectrumPanel extends StatelessWidget {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.75),
-          Colors.white.withValues(alpha: 0.60),
+          AppTheme.buccaneer.withValues(alpha: 0.82),
+          AppTheme.cocoaBrown.withValues(alpha: 0.74),
         ],
       ),
       child: Column(
@@ -66,7 +67,7 @@ class _SpectrumPainter extends CustomPainter {
 
     // Draw background grid
     final gridPaint = Paint()
-      ..color = const Color(0xFF3B82F6).withValues(alpha: 0.05)
+      ..color = AppTheme.tan.withValues(alpha: 0.08)
       ..strokeWidth = 0.5;
 
     for (int i = 1; i < 5; i++) {
@@ -95,11 +96,11 @@ class _SpectrumPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [
-            const Color(0xFF3B82F6).withValues(alpha: glow * 0.95),
-            const Color(0xFF8B5CF6).withValues(alpha: glow * 0.85),
-            const Color(0xFFEC4899).withValues(alpha: glow * 0.75),
-          ],
+            colors: [
+              AppTheme.antiqueBrass.withValues(alpha: glow * 0.95),
+              AppTheme.capePalliser.withValues(alpha: glow * 0.88),
+              AppTheme.buccaneer.withValues(alpha: glow * 0.78),
+            ],
           stops: const [0.0, 0.5, 1.0],
         ).createShader(Rect.fromLTWH(x, size.height - h, barWidth, h));
 
@@ -107,8 +108,8 @@ class _SpectrumPainter extends CustomPainter {
 
       // Glow effect on top
       if (glow > 0.5) {
-        final glowPaint = Paint()
-          ..color = const Color(0xFF3B82F6).withValues(alpha: (glow - 0.5) * 0.3)
+          final glowPaint = Paint()
+          ..color = AppTheme.antiqueBrass.withValues(alpha: (glow - 0.5) * 0.3)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
         canvas.drawRRect(rect, glowPaint);
       }
@@ -118,10 +119,10 @@ class _SpectrumPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [
-            const Color(0xFF3B82F6).withValues(alpha: 0.1),
-            const Color(0xFF8B5CF6).withValues(alpha: 0.0),
-          ],
+            colors: [
+              AppTheme.tan.withValues(alpha: 0.13),
+              AppTheme.capePalliser.withValues(alpha: 0.0),
+            ],
         ).createShader(Rect.fromLTWH(x, size.height - h * 0.3, barWidth, h * 0.3));
 
       canvas.drawRRect(

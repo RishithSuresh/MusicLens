@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import '../../features/audio/presentation/screens/dashboard_screen.dart';
 import '../../features/audio/presentation/widgets/animated_background.dart';
 import '../../features/composer/presentation/screens/composer_screen.dart';
@@ -71,12 +72,12 @@ class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMix
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
+          color: AppTheme.buccaneer.withValues(alpha: 0.86),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppTheme.tan.withValues(alpha: 0.32)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF3B82F6).withValues(alpha: 0.08),
+              color: AppTheme.cocoaBrown.withValues(alpha: 0.45),
               blurRadius: 18,
               offset: const Offset(0, 6),
             ),
@@ -86,14 +87,12 @@ class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMix
           controller: _tabController,
           indicator: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-            ),
+            gradient: AppTheme.primaryGradient,
           ),
           indicatorSize: TabBarIndicatorSize.tab,
           dividerColor: Colors.transparent,
-          labelColor: Colors.white,
-          unselectedLabelColor: const Color(0xFF475569),
+          labelColor: AppTheme.cocoaBrown,
+          unselectedLabelColor: AppTheme.tan,
           labelStyle: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.3),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
           tabs: const [

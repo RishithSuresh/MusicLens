@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 
 class MusicDnaPanel extends StatelessWidget {
@@ -59,10 +60,10 @@ class MusicDnaPanel extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFD8E4F6)),
-        color: Colors.white.withValues(alpha: 0.8),
+        border: Border.all(color: AppTheme.tan.withValues(alpha: 0.42)),
+        color: AppTheme.buccaneer.withValues(alpha: 0.76),
       ),
-      child: Text('$key: $value'),
+      child: Text('$key: $value', style: const TextStyle(color: AppTheme.paper)),
     );
   }
 }

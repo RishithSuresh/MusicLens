@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/glass_card.dart';
 import 'reactive_particle_field.dart';
 
@@ -165,13 +166,13 @@ class _HoverTooltip extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.9),
+        color: AppTheme.cocoaBrown.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: DefaultTextStyle(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
+          style: const TextStyle(color: AppTheme.paper, fontSize: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -207,8 +208,8 @@ class _WaveformPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final accent = Color.lerp(
-      const Color(0xFF3B82F6),
-      const Color(0xFFEC4899),
+      AppTheme.antiqueBrass,
+      AppTheme.tan,
       currentEnergy.clamp(0.0, 1.0),
     )!;
 
@@ -218,22 +219,22 @@ class _WaveformPainter extends CustomPainter {
 
     final wavePaint = Paint()
       ..shader = LinearGradient(
-        colors: [accent, const Color(0xFF8B5CF6)],
+        colors: [accent, AppTheme.capePalliser],
       ).createShader(Offset.zero & size)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.4;
 
     final pitchPaint = Paint()
-      ..color = const Color(0xFFEC4899).withValues(alpha: 0.85)
+      ..color = AppTheme.tan.withValues(alpha: 0.85)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.7;
 
     final beatPaint = Paint()
-      ..color = const Color(0xFF8B5CF6).withValues(alpha: 0.25)
+      ..color = AppTheme.capePalliser.withValues(alpha: 0.3)
       ..strokeWidth = 1;
 
     final progressPaint = Paint()
-      ..color = const Color(0xFF0F172A)
+      ..color = AppTheme.paper
       ..strokeWidth = 1.8;
 
     final wavePath = Path();

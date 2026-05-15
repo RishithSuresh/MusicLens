@@ -66,15 +66,15 @@ class _InsightsPanelState extends State<InsightsPanel> with SingleTickerProvider
   Color _getCategoryColor(String category) {
     switch (category) {
       case 'rhythm':
-        return const Color(0xFFEF4444); // red
+        return AppTheme.antiqueBrass;
       case 'energy':
-        return const Color(0xFFFBBF24); // amber
+        return AppTheme.tan;
       case 'melody':
-        return const Color(0xFF8B5CF6); // violet
+        return AppTheme.capePalliser;
       case 'structure':
-        return const Color(0xFF3B82F6); // blue
+        return AppTheme.buccaneer;
       default:
-        return const Color(0xFF64748B); // slate
+        return AppTheme.tan.withValues(alpha: 0.85);
     }
   }
 
@@ -88,8 +88,8 @@ class _InsightsPanelState extends State<InsightsPanel> with SingleTickerProvider
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          Colors.white.withValues(alpha: 0.75),
-          Colors.white.withValues(alpha: 0.60),
+          AppTheme.buccaneer.withValues(alpha: 0.82),
+          AppTheme.cocoaBrown.withValues(alpha: 0.74),
         ],
       ),
       child: Column(
@@ -123,7 +123,7 @@ class _InsightsPanelState extends State<InsightsPanel> with SingleTickerProvider
             child: LinearProgressIndicator(
               value: widget.totalDuration <= 0 ? 0 : (widget.currentTime / widget.totalDuration).clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: const Color(0xFFE2E8F0),
+               backgroundColor: AppTheme.cocoaBrown.withValues(alpha: 0.8),
               valueColor: AlwaysStoppedAnimation<Color>(
                 AppTheme.primaryGradient.colors.first,
               ),
@@ -133,7 +133,7 @@ class _InsightsPanelState extends State<InsightsPanel> with SingleTickerProvider
           Text(
             'Timeline ${widget.currentTime.toStringAsFixed(2)}s / ${widget.totalDuration.toStringAsFixed(2)}s',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF64748B),
+               color: AppTheme.tan,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.2,
             ),
@@ -158,13 +158,13 @@ class _InsightsPanelState extends State<InsightsPanel> with SingleTickerProvider
                       category,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? _getCategoryColor(category) : const Color(0xFF64748B),
+                        color: isSelected ? _getCategoryColor(category) : AppTheme.tan,
                       ),
                     ),
-                    backgroundColor: Colors.white.withValues(alpha: 0.6),
+                    backgroundColor: AppTheme.buccaneer.withValues(alpha: 0.74),
                     selectedColor: _getCategoryColor(category).withValues(alpha: 0.2),
                     side: BorderSide(
-                      color: isSelected ? _getCategoryColor(category) : const Color(0xFFD8E4F5),
+                       color: isSelected ? _getCategoryColor(category) : AppTheme.tan.withValues(alpha: 0.35),
                       width: isSelected ? 2.5 : 1.5,
                     ),
                     elevation: isSelected ? 4 : 0,
@@ -183,7 +183,7 @@ class _InsightsPanelState extends State<InsightsPanel> with SingleTickerProvider
                 child: Text(
                   'No insights in this category',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF94A3B8),
+                     color: AppTheme.tan.withValues(alpha: 0.7),
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -316,7 +316,7 @@ class _InsightBubbleState extends State<_InsightBubble> with SingleTickerProvide
                 child: Text(
                   widget.insight.text,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF1E293B),
+                     color: AppTheme.paper,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 0.2,
                   ),

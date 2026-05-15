@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 class GlassCard extends StatefulWidget {
   const GlassCard({
     required this.child,
@@ -79,25 +81,25 @@ class _GlassCardState extends State<GlassCard> with SingleTickerProviderStateMix
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Colors.white.withValues(alpha: 0.72),
-                              Colors.white.withValues(alpha: 0.55),
+                              AppTheme.buccaneer.withValues(alpha: 0.82),
+                              AppTheme.cocoaBrown.withValues(alpha: 0.76),
                             ],
                           ),
                     border: Border.all(
-                      color: Colors.white.withValues(
+                      color: AppTheme.tan.withValues(
                         alpha: _isHovered ? 0.85 : 0.70,
                       ),
                       width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF3B82F6).withValues(alpha: _isHovered ? 0.18 : 0.1),
+                        color: AppTheme.capePalliser.withValues(alpha: _isHovered ? 0.24 : 0.14),
                         offset: const Offset(0, 12),
                         blurRadius: _isHovered ? 34 : 24,
                         spreadRadius: 0,
                       ),
                       BoxShadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: _isHovered ? 0.1 : 0.06),
+                        color: AppTheme.cocoaBrown.withValues(alpha: _isHovered ? 0.34 : 0.26),
                         offset: const Offset(0, 16),
                         blurRadius: _isHovered ? 24 : 16,
                       ),

@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
+
 class AnimatedBackground extends StatefulWidget {
   const AnimatedBackground({required this.child, super.key});
 
@@ -42,15 +44,15 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
         final wave3 = math.sin(_controller.value * math.pi * 2 + math.pi * 2 / 3);
 
         return Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFFFAFBFC),
-                Color(0xFFF0F4FF),
-                Color(0xFFFAF5FF),
-                Color(0xFFF5FEFF),
+                AppTheme.cocoaBrown,
+                AppTheme.buccaneer,
+                AppTheme.capePalliser,
+                AppTheme.buccaneer,
               ],
               stops: [0.0, 0.33, 0.66, 1.0],
             ),
@@ -59,7 +61,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
             children: [
               // Enhanced blob system with multiple layers
               _AnimatedBlob(
-                color: const Color(0xFF3B82F6),
+                color: AppTheme.tan,
                 left: 40 + (40 * wave1),
                 top: 60,
                 size: 280,
@@ -67,7 +69,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                 opacity: 0.20,
               ),
               _AnimatedBlob(
-                color: const Color(0xFF8B5CF6),
+                color: AppTheme.antiqueBrass,
                 left: 380 + (50 * wave2),
                 top: 180 + (30 * wave1),
                 size: 320,
@@ -75,7 +77,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                 opacity: 0.18,
               ),
               _AnimatedBlob(
-                color: const Color(0xFFEC4899),
+                color: AppTheme.capePalliser,
                 left: 150 + (45 * wave3),
                 top: 520 - (40 * wave2),
                 size: 260,
@@ -83,7 +85,7 @@ class _AnimatedBackgroundState extends State<AnimatedBackground>
                 opacity: 0.16,
               ),
               _AnimatedBlob(
-                color: const Color(0xFF06B6D4),
+                color: AppTheme.buccaneer,
                 left: 600 + (35 * wave1),
                 top: 400 + (25 * wave3),
                 size: 240,
@@ -173,13 +175,13 @@ class _EnhancedWavePatternPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Primary wave pattern
     final paint1 = Paint()
-      ..color = const Color(0xFF3B82F6).withValues(alpha: 0.08)
+      ..color = AppTheme.tan.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
     // Secondary wave pattern
     final paint2 = Paint()
-      ..color = const Color(0xFF8B5CF6).withValues(alpha: 0.06)
+      ..color = AppTheme.antiqueBrass.withValues(alpha: 0.08)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
@@ -231,7 +233,7 @@ class _MeshGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF3B82F6).withValues(alpha: 0.04)
+      ..color = AppTheme.tan.withValues(alpha: 0.06)
       ..strokeWidth = 0.8;
 
     const gridSize = 120.0;
