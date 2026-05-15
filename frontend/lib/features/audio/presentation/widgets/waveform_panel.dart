@@ -37,6 +37,10 @@ class WaveformPanel extends StatefulWidget {
 }
 
 class _WaveformPanelState extends State<WaveformPanel> {
+  static const double _compactWaveformHeight = 220;
+  static const double _tooltipOffsetX = 8;
+  static const double _tooltipWidth = 150;
+
   double? _hoverX;
 
   @override
@@ -69,7 +73,7 @@ class _WaveformPanelState extends State<WaveformPanel> {
               ],
               if (widget.compact)
                 SizedBox(
-                  height: 220,
+                  height: _compactWaveformHeight,
                   child: _buildWaveformArea(values, pitch, width, hoverTime),
                 )
               else
@@ -133,7 +137,7 @@ class _WaveformPanelState extends State<WaveformPanel> {
                 ),
                 if (_hoverX != null && hoverTime != null)
                   Positioned(
-                    left: (_hoverX! + 8).clamp(0, width - 150),
+                    left: (_hoverX! + _tooltipOffsetX).clamp(0, width - _tooltipWidth),
                     top: widget.compact ? 10 : 12,
                     child: RepaintBoundary(
                       child: _HoverTooltip(
