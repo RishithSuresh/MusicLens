@@ -66,7 +66,8 @@ class _WaveformPanelState extends State<WaveformPanel> {
                 ),
                 const SizedBox(height: 12),
               ],
-              MouseRegion(
+              Expanded(
+                child: MouseRegion(
                 opaque: true,
                 onHover: (event) {
                   final nextX = event.localPosition.dx.clamp(0.0, width);
@@ -82,7 +83,6 @@ class _WaveformPanelState extends State<WaveformPanel> {
                   onTapDown: (details) => _seekFromLocalX(details.localPosition.dx, width),
                   onHorizontalDragUpdate: (details) => _seekFromLocalX(details.localPosition.dx, width),
                   child: SizedBox(
-                    height: widget.compact ? 216 : 270,
                     width: double.infinity,
                     child: ClipRect(
                       child: Stack(
@@ -124,6 +124,7 @@ class _WaveformPanelState extends State<WaveformPanel> {
                     ),
                   ),
                 ),
+              ),
               ),
             ],
           );

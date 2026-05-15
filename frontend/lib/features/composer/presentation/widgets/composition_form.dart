@@ -192,8 +192,14 @@ class _CompositionFormState extends State<CompositionForm> {
           child: DropdownButton<String>(
             value: value,
             isDense: true,
+            isExpanded: true,
             items: items
-                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s,
+                    child: Text(s, overflow: TextOverflow.ellipsis),
+                  ),
+                )
                 .toList(growable: false),
             onChanged: (v) => v == null ? null : onChanged(v),
           ),
