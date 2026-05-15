@@ -7,10 +7,13 @@ FastAPI audio analysis backend.
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 # Optional: install full AI Music Composer stack for /compose
 # (music21/mido/LangGraph). MP3 encoding dependency (pydub) is included in requirements.txt.
 pip install -r requirements-composer.txt
+# Optional but recommended for MP3 preview/export support
+winget install Gyan.FFmpeg
 uvicorn app.main:app --reload
 ```
 
