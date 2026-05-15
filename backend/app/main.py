@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.analysis import AnalysisResponse
 from app.models.composition import CompositionRequest, CompositionResponse, RandomPromptResponse
-from app.services.audio_analysis import analyze_audio_bytes
 
 app = FastAPI(title="MusicLens API", version="0.1.0")
 
@@ -114,6 +113,17 @@ async def analyze(file: UploadFile = File(...)) -> AnalysisResponse:
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
+
+    try:
+        from app.services.audio_analysis import analyze_audio_bytes
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Audio analysis dependencies are not available. "
+                "Run: pip install -r requirements.txt"
+            ),
+        ) from exc
 
     try:
         response = analyze_audio_bytes(audio_bytes)
