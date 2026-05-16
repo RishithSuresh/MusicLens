@@ -1,0 +1,4 @@
+{
+  "buildCommand": "flutter build web --release --dart-define=MUSICLENS_API_BASE_URL=https://musiclens-api.onrender.com",
+  "outputDirectory": "build/web"
+}
