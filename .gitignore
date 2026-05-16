@@ -6,3 +6,5 @@ __pycache__/
 !.env.example
 build/
 dist/
+.dart_tool/
+.pytest_cache/
